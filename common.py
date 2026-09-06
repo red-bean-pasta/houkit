@@ -133,6 +133,15 @@ def points_to_positions(points: Sequence[hou.Point]) -> Iterator[hou.Vector3]:
     return (p.position() for p in points)
 
 
+def find_prim(reference_point: hou.Point, *required_points: hou.Point) -> hou.Prim:
+    """Return the first primitive containing ``reference_point`` and all required points."""
+    return next(
+        primitive
+        for primitive in reference_point.prims()
+        if all(point in primitive.points() for point in required_points)
+    )
+
+
 def add_folder(
         node: hou.OpNode,
         name: str,

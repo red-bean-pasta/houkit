@@ -53,6 +53,22 @@ def remove_attribs(
     operator.remove_attribs(geo, point_attributes, prim_attributes, global_attributes)
 
 
+def points_by_attrib(
+    source: Geometry | Prim | Sequence[Prim],
+    attribute: str,
+    skip_blank: bool = False,
+) -> dict[str, set[Point]]:
+    return querier.points_by_attrib(source, attribute, skip_blank)
+
+
+def points_start_with(
+    geo: Geometry,
+    attribute: str,
+    prefixes: str | tuple[str, ...],
+) -> list[Point]:
+    return querier.points_start_with(geo, attribute, prefixes)
+
+
 def unique_points_by_attrib(
     source: Geometry | Prim | Sequence[Prim],
     attribute: str,

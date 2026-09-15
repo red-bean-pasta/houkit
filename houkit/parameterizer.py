@@ -1,5 +1,6 @@
 from typing import Sequence
 
+import hou
 from hou import SopNode, OpNode, Vector2, Vector3
 
 from .parameterizings.promoter import (
@@ -8,7 +9,52 @@ from .parameterizings.promoter import (
     promote_parms_from,
 )
 from .parameterizings.querier import T, Parameters
-from .parameterizings import querier
+from .parameterizings import operator, querier
+
+
+def add_folder(
+    node: OpNode,
+    name: str,
+    label: str = "",
+    folder_type: hou.folderType = hou.folderType.Tabs,
+    **kwargs,
+) -> None:
+    operator.add_folder(node, name, label, folder_type, **kwargs)
+
+
+def add_heading(
+    node: OpNode,
+    text: str,
+    name: str = "",
+    label: str = "",
+    folder_label: str = "",
+    **kwargs,
+) -> None:
+    operator.add_heading(node, text, name, label, folder_label, **kwargs)
+
+
+def add_float_parm(
+    node: OpNode,
+    name: str,
+    size: int = 1,
+    default: float | tuple[float, ...] = (0.0,),
+    min_max: tuple[float | None, float | None] = (None, None),
+    naming_scheme: hou.parmNamingScheme = hou.parmNamingScheme.XYZW,
+    label: str = "",
+    folder_label: str = "",
+    **kwargs,
+) -> None:
+    operator.add_float_parm(
+        node,
+        name,
+        size,
+        default,
+        min_max,
+        naming_scheme,
+        label,
+        folder_label,
+        **kwargs,
+    )
 
 
 def get_parms(

@@ -1,18 +1,51 @@
 from typing import Sequence, Iterator, Any
 
-from hou import Point, Prim, Vector3, Polygon, Face
+from hou import Geometry, Point, Prim, Vector3, Polygon, Face
 
 from .topologies import basic, extruder, helper, merger
 from .topologies import loop_cutter
 from .topologies import pentagon_handler, face_offseter
+from .topologies.helper import Edge
 
 
 def points_to_positions(points: Sequence[Point]) -> Iterator[Vector3]:
     return basic.points_to_positions(points)
 
 
+def add_point(
+    geo: Geometry,
+    position: Vector3,
+    attributes: dict[str, Any] | tuple[str, Any] | None = None,
+) -> Point:
+    return basic.add_point(geo, position, attributes)
+
+
+def is_neighbor(p1: Point, p2: Point) -> bool:
+    return helper.is_neighbor(p1, p2)
+
+
+def check_neighbors(target: Point, samples: Sequence[Point]) -> list[Point]:
+    return helper.check_neighbors(target, samples)
+
+
+def get_first_neighbor(target: Point, samples: Sequence[Point]) -> Point | None:
+    return helper.get_first_neighbor(target, samples)
+
+
 def get_prims_normal(prims: Prim | Face | Sequence[Prim]) -> Vector3:
     return helper.get_prims_normal(prims)
+
+
+def get_prim_normal(prim: Prim | Face) -> Vector3:
+    return helper.get_prim_normal(prim)
+
+
+def unique_prim_points(prims: Sequence[Prim]) -> list[Point]:
+    return helper.unique_prim_points(prims)
+
+
+def get_edge_prim_count(prims: Sequence[Prim]) -> dict[Edge, int]:
+    return helper.get_edge_prim_count(prims)
 
 
 def get_prim_centroid(prims: Prim | Sequence[Prim]) -> Vector3:
@@ -27,6 +60,29 @@ def find_prim(
     return helper.find_prim(reference, *rest)
 
 
+def interpolate_point(
+    p0: Point,
+    p1: Point,
+    ratio: float,
+) -> Vector3:
+    return helper.interpolate_point(p0, p1, ratio)
+
+
+def point_distance_to_line(
+    point: Point,
+    line: Edge | tuple[Point, Point],
+) -> float:
+    return helper.point_distance_to_line(point, line)
+
+
+def order_prim_points(
+    points: Sequence[Point],
+    edge: tuple[Point, Point],
+    assert_count: int | None = None,
+) -> list[Point]:
+    return helper.order_prim_points(points, edge, assert_count)
+
+
 def offset_point(
     point: Point,
     offset: Vector3,
@@ -39,6 +95,22 @@ def fill_face(
     reverse: bool = False,
 ) -> Polygon:
     return basic.fill_face(points, reverse)
+
+
+def fill_faces(
+    points: list[list[Point]],
+    attributes: Sequence[tuple[dict[str, Any], list[str]]] | tuple[dict[str, Any], list[str]] = (),
+) -> list[Prim]:
+    return basic.fill_faces(points, attributes)
+
+
+def fill_face_by_attrib(
+    geo: Geometry,
+    attribute: str,
+    values: Sequence[str],
+    reverse_order: bool = False,
+) -> Polygon:
+    return basic.fill_face_by_attrib(geo, attribute, values, reverse_order)
 
 
 def traverse_faces_between_edges(
@@ -118,6 +190,12 @@ def outset(
     :return: List of newly generated outer border quad primitives.
     """
     return face_offseter.outset(prims, scalar, use_ratio, follow_existing_edge)
+
+
+def partition_connected_prims(
+    prims: list[Prim],
+) -> list[tuple[Prim]]:
+    return face_offseter.partition_connected_prims(prims)
 
 
 def loop_cut(

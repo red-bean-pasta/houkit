@@ -35,8 +35,8 @@ def add_reloadable_subnet(
 ) -> SopNode:
     return reloader.add_reloadable_subnet(parent, name)
 
-def add_reload_button(parent: SopNode) -> SopNode:
-    return reloader.add_reload_button(parent)
+def add_reload_button(parent: SopNode, reload_fn: Callable = reloader.reload_modules) -> SopNode:
+    return reloader.add_reload_button(parent, reload_fn)
 
 
 def add_recalculate_normal(
@@ -79,6 +79,5 @@ def add_output(
     p_input: SopNode,
 ) -> SopNode:
     return sops.add_output(parent, name, p_input)
-
 
 

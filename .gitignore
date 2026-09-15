@@ -16,3 +16,7 @@ backup/
 
 *.hipnc
 *.hip
+
+.aiassistant/
+.codex/
+.agents/

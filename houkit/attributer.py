@@ -1,7 +1,7 @@
 """
 Utility functions for attribute-based identification, naming, and indexing of geometry elements (points, prims).
 """
-from typing import Sequence, Callable, Any
+from typing import Sequence, Callable, Any, Iterator
 
 import hou
 from hou import Geometry, Point, Prim
@@ -82,6 +82,23 @@ def unique_points_start_with(
     prefixes: str | tuple[str, ...],
 ) -> dict[str, dict[str, Point]]:
     return querier.unique_points_start_with(geo, attribute, prefixes)
+
+
+def latest_points_by_attrib(
+    geo: Geometry,
+    attribute: str,
+    *values: str,
+    assert_existing: bool = True,
+) -> Iterator[Point]:
+    """
+
+    :param geo:
+    :param attribute:
+    :param values:
+    :param assert_existing: If False, missing point will return None
+    :return:
+    """
+    return querier.latest_points_by_attrib(geo, attribute, *values, assert_existing=assert_existing)
 
 
 def scan_indexed_attrib_range(

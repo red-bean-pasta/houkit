@@ -7,9 +7,9 @@ import hou
 
 def reload_modules() -> None:
     importlib.invalidate_caches()
-    hip_dir = Path(hou.hipFile.path()).resolve().parent  # type: ignore
+    source_root = find_project_root(Path(hou.hipFile.path()).resolve().parent)  # type: ignore
 
-    for name, module in _hip_modules_to_reload(hip_dir):
+    for name, module in _hip_modules_to_reload(source_root):
         # Earlier reloads may have replaced this entry.
         if sys.modules.get(name) is not module:
             continue
@@ -20,6 +20,17 @@ def reload_modules() -> None:
             continue
 
         importlib.reload(module)
+
+
+def find_project_root(path: str | Path | None = None) -> Path:
+    """Find the project root defined by file pyproject.toml independently of the current working directory."""
+    if not path:
+        path = __file__
+    script_directory = Path(path).resolve().parent
+    for directory in (script_directory, *script_directory.parents):
+        if (directory / "pyproject.toml").is_file():
+            return directory
+    raise FileNotFoundError(f"Could not find project root above {script_directory}")
 
 
 def _hip_modules_to_reload(hip_dir: Path):

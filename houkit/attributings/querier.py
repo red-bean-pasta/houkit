@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import Sequence, Any
+from typing import Sequence, Any, Iterator
 
 from hou import Geometry, Point, Prim
 
@@ -81,6 +81,31 @@ def unique_points_by_attrib(
             assert value not in result, f"Duplicate point {attribute}: {value}"
             result[value] = point
     return result
+
+
+def latest_points_by_attrib(
+    geo: Geometry,
+    attribute: str,
+    *values: str,
+    assert_existing: bool = True,
+) -> Iterator[Point]:
+    """
+
+    :param geo:
+    :param attribute:
+    :param values:
+    :param assert_existing: If False, missing point will return None
+    :return:
+    """
+    pts = points_by_attrib(geo, attribute, skip_blank=True)
+    for v in values:
+        if v not in pts:
+            if not assert_existing:
+                yield None
+                continue
+            raise AssertionError(f"Missing value '{v}' for attribute '{attribute}'")
+        candidates = pts[v]
+        yield max(candidates, key=lambda point: point.number())
 
 
 def scan_indexed_attrib_range(

@@ -54,7 +54,7 @@ def remove_attribs(
     operator.remove_attribs(geo, point_attributes, prim_attributes, global_attributes)
 
 
-def set_point_attrib_by_position(
+def set_point_attribs_by_position(
     points: Sequence[Point],
     attrib_name: str,
     name_prefix: str,
@@ -63,6 +63,7 @@ def set_point_attrib_by_position(
     start_index: int = 0,
     special_labels: Mapping[int, str] | None = None,
     reuse_index_after_special: bool = True,
+    tolerance: float = 1e-5,
 ) -> None:
     """Set an indexed string attribute on points ordered by position.
 
@@ -74,8 +75,9 @@ def set_point_attrib_by_position(
     :param start_index: Numeric suffix assigned to the first sorted point.
     :param special_labels: Replacement labels keyed by their generated index.
     :param reuse_index_after_special: Whether special labels leave the next regular numeric suffix unchanged.
+    :param tolerance:
     """
-    positional_attributer.set_point_attrib_by_position(points, attrib_name, name_prefix, axis_order, axis_ascending, start_index, special_labels, reuse_index_after_special)
+    positional_attributer.set_point_attribs_by_position(points, attrib_name, name_prefix, axis_order, axis_ascending, start_index, special_labels, reuse_index_after_special, tolerance)
 
 
 def points_by_attrib(

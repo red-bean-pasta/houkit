@@ -68,6 +68,30 @@ def point_distance_to_line(
     return v.cross(v_line).length() / len_line
 
 
+def get_line_intersection(
+    first_line: tuple[Vector3, Vector3],
+    second_line: tuple[Vector3, Vector3],
+) -> Vector3:
+    first_start, first_end = first_line
+    second_start, second_end = second_line
+    first_direction = first_end - first_start
+    second_direction = second_end - second_start
+    normal = first_direction.cross(second_direction)
+    denominator = normal.dot(normal)
+
+    assert first_direction.length() > 1e-6, "Expected a nonzero first line"
+    assert second_direction.length() > 1e-6, "Expected a nonzero second line"
+    assert denominator > 1e-12, "Expected nonparallel lines"
+
+    normal = normal.normalized()
+    projected_second_start = second_start - normal * (second_start - first_start).dot(normal)
+    offset = projected_second_start - first_start
+    normal_length = denominator ** 0.5
+    first_ratio = offset.cross(second_direction).dot(normal) / normal_length
+
+    return first_start + first_direction * first_ratio
+
+
 def get_point_on_ellipse_2d(
     origin: Vector3,
     vertical_end: Vector3,

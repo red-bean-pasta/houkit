@@ -5,7 +5,7 @@ from hou import Point
 from houkit.topologies.sorter import Axis, sort_points_by_position
 
 
-def set_point_attrib_by_position(
+def set_point_attribs_by_position(
     points: Sequence[Point],
     attrib_name: str,
     name_prefix: str,
@@ -14,8 +14,9 @@ def set_point_attrib_by_position(
     start_index: int = 0,
     special_labels: Mapping[int, str] | None = None,
     reuse_index_after_special: bool = True,
+    tolerance: float = 1e-5,
 ) -> None:
-    sorted_points = sort_points_by_position(points, axis_order, axis_ascending)
+    sorted_points = sort_points_by_position(points, axis_order, axis_ascending, tolerance)
 
     next_numeric_index = start_index
     for global_index, point in enumerate(sorted_points, start=start_index):

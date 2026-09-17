@@ -1,4 +1,4 @@
-from typing import Sequence, Any
+from typing import Sequence, Any, Iterator
 
 from hou import Vector3, Prim, Point, Face
 
@@ -47,14 +47,14 @@ def get_first_neighbor(target: Point, samples: Sequence[Point]) -> Point | None:
     return next((p for p in samples if is_neighbor(target, p)), None)
 
 
-def find_prim(
+def find_prims(
     reference_point: Point,
     *required_points: Point
-) -> Prim:
-    return next(
-        primitive
-        for primitive in reference_point.prims()
-        if all(point in primitive.points() for point in required_points)
+) -> Iterator[Prim]:
+    return (
+        prim
+        for prim in reference_point.prims()
+        if all(point in prim.points() for point in required_points)
     )
 
 
@@ -89,6 +89,16 @@ def point_distance_to_line(
     return geomath.point_distance_to_line(
         point.position(),
         (p0.position(), p1.position())
+    )
+
+
+def get_line_intersection(
+    first_line: tuple[Point, Point],
+    second_line: tuple[Point, Point],
+) -> Vector3:
+    return geomath.get_line_intersection(
+        tuple(p.position() for p in first_line),
+        tuple(p.position() for p in second_line),
     )
 
 

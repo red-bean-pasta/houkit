@@ -14,20 +14,21 @@ def sort_points_by_position(
     points: Sequence[Point],
     axis_order: tuple[Axis, Axis, Axis],
     axis_ascending: tuple[bool, bool, bool] = (True, True, True),
+    tolerance: float = 1e-5,
 ) -> list[Point]:
     return sorted(
         points,
-        key=lambda point: _position_sort_key(point, axis_order, axis_ascending),
+        key=lambda point: _position_sort_key(point, axis_order, axis_ascending, tolerance),
     )
 
 def _position_sort_key(
     point: Point,
     axis_order: tuple[Axis, Axis, Axis],
     axis_ascending: tuple[bool, bool, bool],
-) -> tuple[float, float, float]:
+    tolerance: float = 1e-5,
+) -> tuple[int, int, int]:
     position = point.position()
     return tuple(
-        coordinate if ascending else -coordinate
+        round(position[axis.value] / tolerance) * (1 if ascending else -1)
         for axis, ascending in zip(axis_order, axis_ascending)
-        for coordinate in (position[axis.value],)
     )

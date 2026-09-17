@@ -5,6 +5,7 @@ from hou import Geometry, Point, Prim, Vector3, Polygon, Face
 from .topologies import basic, extruder, helper, merger, sorter
 from .topologies import loop_cutter
 from .topologies import pentagon_handler, face_offseter
+from .topologies import splitter
 from .topologies.helper import Edge
 from .topologies.sorter import Axis
 
@@ -25,14 +26,16 @@ def sort_points_by_position(
     points: Sequence[Point],
     axis_order: tuple[Axis, Axis, Axis],
     axis_ascending: tuple[bool, bool, bool] = (True, True, True),
+    tolerance: float = 1e-5,
 ) -> list[Point]:
     """
 
     :param points:
     :param axis_order: Axes to compare, from highest to lowest priority.
     :param axis_ascending: Sort direction for each axis in ``axis_order``. ``True`` placing smaller coordinates first.
+    :param tolerance:
     """
-    return sorter.sort_points_by_position(points, axis_order, axis_ascending)
+    return sorter.sort_points_by_position(points, axis_order, axis_ascending, tolerance)
 
 
 def is_neighbor(p1: Point, p2: Point) -> bool:
@@ -72,7 +75,14 @@ def find_prim(
 ) -> Prim:
     """Return the first primitive containing ``reference_point`` and all required points."""
     reference, *rest = points
-    return helper.find_prim(reference, *rest)
+    return next(find_prims(reference, *rest))
+
+def find_prims(
+    *points: Point
+) -> Iterator[Prim]:
+    """Return the primitives containing ``reference_point`` and all required points."""
+    reference, *rest = points
+    return helper.find_prims(reference, *rest)
 
 
 def interpolate_point(
@@ -88,6 +98,14 @@ def point_distance_to_line(
     line: Edge | tuple[Point, Point],
 ) -> float:
     return helper.point_distance_to_line(point, line)
+
+
+def get_line_intersection(
+    first_line: tuple[Point, Point],
+    second_line: tuple[Point, Point],
+) -> Vector3:
+    """Return the projected intersection of two 3D lines on first line."""
+    return helper.get_line_intersection(first_line, second_line)
 
 
 def order_prim_points(
@@ -284,6 +302,18 @@ def merge_points(
     - Reconstructs affected primitives preserving primitive attributes and primitive group memberships.
     """
     merger.merge_points(pairs)
+
+
+def split_point(
+    prims: Prim | Sequence[Prim],
+    point: Point,
+) -> tuple[Point, list[Prim]]:
+    """Split ``point`` from the selected primitives.
+
+    The selected primitives are rebuilt with a new point at the same position.
+    Point and primitive attributes, including group membership, are preserved.
+    """
+    return splitter.split_point(prims, point)
 
 
 def is_same_geo(sequence: Sequence[Any]) -> bool:

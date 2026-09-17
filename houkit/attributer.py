@@ -1,13 +1,14 @@
 """
 Utility functions for attribute-based identification, naming, and indexing of geometry elements (points, prims).
 """
-from typing import Sequence, Callable, Any, Iterator
+from typing import Sequence, Callable, Any, Iterator, Mapping
 
 import hou
 from hou import Geometry, Point, Prim
 
-from .attributings import transferer
+from .attributings import transferer, positional_attributer
 from .attributings import querier, operator
+from .topologies.sorter import Axis
 
 
 def add_point_attrib(geo: Geometry, name: str, default: Any) -> hou.Attrib:
@@ -51,6 +52,30 @@ def remove_attribs(
     global_attributes: str | tuple[str, ...] | None = None,
 ) -> None:
     operator.remove_attribs(geo, point_attributes, prim_attributes, global_attributes)
+
+
+def set_point_attrib_by_position(
+    points: Sequence[Point],
+    attrib_name: str,
+    name_prefix: str,
+    axis_order: tuple[Axis, Axis, Axis],
+    axis_ascending: tuple[bool, bool, bool] = (True, True, True),
+    start_index: int = 0,
+    special_labels: Mapping[int, str] | None = None,
+    reuse_index_after_special: bool = True,
+) -> None:
+    """Set an indexed string attribute on points ordered by position.
+
+    :param points: Points to label. The input sequence is not reordered.
+    :param attrib_name: Name of the point attribute to set.
+    :param name_prefix: Prefix for generated attribute values.
+    :param axis_order: Axes to compare, from highest to lowest priority.
+    :param axis_ascending: Sort direction for each axis in ``axis_order``. ``True`` placing smaller coordinates first.
+    :param start_index: Numeric suffix assigned to the first sorted point.
+    :param special_labels: Replacement labels keyed by their generated index.
+    :param reuse_index_after_special: Whether special labels leave the next regular numeric suffix unchanged.
+    """
+    positional_attributer.set_point_attrib_by_position(points, attrib_name, name_prefix, axis_order, axis_ascending, start_index, special_labels, reuse_index_after_special)
 
 
 def points_by_attrib(

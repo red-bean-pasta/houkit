@@ -2,10 +2,11 @@ from typing import Sequence, Iterator, Any
 
 from hou import Geometry, Point, Prim, Vector3, Polygon, Face
 
-from .topologies import basic, extruder, helper, merger
+from .topologies import basic, extruder, helper, merger, sorter
 from .topologies import loop_cutter
 from .topologies import pentagon_handler, face_offseter
 from .topologies.helper import Edge
+from .topologies.sorter import Axis
 
 
 def points_to_positions(points: Sequence[Point]) -> Iterator[Vector3]:
@@ -18,6 +19,20 @@ def add_point(
     attributes: dict[str, Any] | tuple[str, Any] | None = None,
 ) -> Point:
     return basic.add_point(geo, position, attributes)
+
+
+def sort_points_by_position(
+    points: Sequence[Point],
+    axis_order: tuple[Axis, Axis, Axis],
+    axis_ascending: tuple[bool, bool, bool] = (True, True, True),
+) -> list[Point]:
+    """
+
+    :param points:
+    :param axis_order: Axes to compare, from highest to lowest priority.
+    :param axis_ascending: Sort direction for each axis in ``axis_order``. ``True`` placing smaller coordinates first.
+    """
+    return sorter.sort_points_by_position(points, axis_order, axis_ascending)
 
 
 def is_neighbor(p1: Point, p2: Point) -> bool:

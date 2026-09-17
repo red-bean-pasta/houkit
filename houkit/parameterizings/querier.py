@@ -1,7 +1,7 @@
 from typing import TypeVar, get_origin, get_args, Any
 
 import hou
-from hou import OpNode, Vector2, Vector3, ParmTuple
+from hou import OpNode, Vector3, ParmTuple
 
 T = TypeVar("T")
 

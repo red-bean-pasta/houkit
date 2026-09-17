@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import Sequence, Any, Iterator
+from typing import Sequence, Iterator
 
 from hou import Geometry, Point, Prim
 

@@ -7,6 +7,9 @@ from hou import Point, Vector3, Quaternion
 from .geomaths import elliptical_interpolator
 
 
+def is_zero_approx(a: float, tol: float = 1e-5) -> bool:
+    return abs(a) <= tol
+
 def is_equal_approx(a: float, b: float, tol: float = 1e-5) -> bool:
     return abs(a - b) <= tol
 

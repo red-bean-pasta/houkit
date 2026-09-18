@@ -4,7 +4,7 @@ Utility functions for attribute-based identification, naming, and indexing of ge
 from typing import Sequence, Callable, Any, Iterator, Mapping
 
 import hou
-from hou import Geometry, Point, Prim
+from hou import Geometry, Point, Prim, Vector3
 
 from .attributings import transferer, positional_attributer
 from .attributings import querier, operator
@@ -109,6 +109,23 @@ def unique_points_start_with(
     prefixes: str | tuple[str, ...],
 ) -> dict[str, dict[str, Point]]:
     return querier.unique_points_start_with(geo, attribute, prefixes)
+
+
+def points_from_geo(
+    geo: Geometry,
+    attribute: str,
+    *values: str
+) -> Iterator[Point]:
+    """Return the geometry points identified by ``point_ids`` in the same order."""
+    return querier.points_from_geo(geo, attribute, *values)
+
+def positions_from_geo(
+    geo: Geometry,
+    attribute: str,
+    *values: str
+) -> Iterator[Vector3]:
+    """Return the geometry points' positions identified by ``point_ids`` in the same order."""
+    return querier.positions_from_geo(geo, attribute, *values)
 
 
 def latest_points_by_attrib(

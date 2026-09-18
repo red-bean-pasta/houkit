@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from typing import Sequence, Iterator
 
-from hou import Geometry, Point, Prim
+from hou import Geometry, Point, Prim, Vector3
 
 
 def points_by_attrib(
@@ -81,6 +81,25 @@ def unique_points_by_attrib(
             assert value not in result, f"Duplicate point {attribute}: {value}"
             result[value] = point
     return result
+
+
+def points_from_geo(
+    geo: Geometry,
+    attribute: str,
+    *values: str
+) -> Iterator[Point]:
+    """Return the geometry points identified by ``point_ids`` in the same order."""
+    points = unique_points_by_attrib(geo, attribute)
+    return (points[point_id] for point_id in values)
+
+def positions_from_geo(
+    geo: Geometry,
+    attribute: str,
+    *values: str
+) -> Iterator[Vector3]:
+    """Return the geometry points' positions identified by ``point_ids`` in the same order."""
+    points = unique_points_by_attrib(geo, attribute)
+    return (points[point_id].position() for point_id in values)
 
 
 def latest_points_by_attrib(

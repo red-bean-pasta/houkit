@@ -77,3 +77,11 @@ def fill_face_by_attrib(
         assert p is not None, f"Expected point with id {v}"
         face_points.append(p)
     return fill_face(face_points, reverse_order)
+
+
+def remove_unused_points(
+    geo: Geometry,
+) -> None:
+    unused = [p for p in geo.points() if not p.prims()]
+    if unused:
+        geo.deletePoints(unused)

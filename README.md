@@ -96,9 +96,6 @@ offset_point(corner_1, Vector3(-1, 0, 0))
 
 [Houdini Spider Generator](https://github.com/red-bean-pasta/houdini-spider-generator) is a complete procedural-modeling project built with Houkit.
 
-## License
-
-MIT License — Copyright (c) 2026 red-bean-pasta.
 
 ## Acknowledgements
 

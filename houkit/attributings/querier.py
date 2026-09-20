@@ -36,6 +36,21 @@ def points_start_with(
     ]
 
 
+def points_contains(
+    geo: Geometry,
+    attribute: str,
+    strings: str | tuple[str, ...],
+) -> list[Point]:
+    return [
+        point
+        for point, value in zip(
+            geo.points(),
+            geo.pointStringAttribValues(attribute),
+        )
+        if any(s in value for s in strings)
+    ]
+
+
 def unique_points_start_with(
     geo: Geometry,
     attribute: str,

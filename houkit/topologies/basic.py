@@ -1,6 +1,6 @@
 from typing import Sequence, Any, Iterator
 
-from hou import Point, Vector3, Prim, Polygon, Geometry
+from hou import Point, Vector3, Prim, Polygon, Geometry, Attrib
 
 from ..attributings.operator import set_point_attrib
 from ..attributings.querier import unique_points_by_attrib
@@ -15,7 +15,7 @@ def points_to_positions(points: Sequence[Point]) -> Iterator[Vector3]:
 def add_point(
     geo: Geometry,
     position: Vector3,
-    attributes: dict[str, Any] | tuple[str, Any] | None = None,
+    attributes: dict[str | Attrib, Any] | tuple[str | Attrib, Any] | None = None,
 ) -> Point:
     p: Point = geo.createPoint()
     p.setPosition(position)

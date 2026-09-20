@@ -1,6 +1,6 @@
 from typing import Sequence, Iterator, Any
 
-from hou import Geometry, Point, Prim, Vector3, Polygon, Face
+from hou import Geometry, Point, Prim, Vector3, Polygon, Face, Attrib
 
 from .topologies import basic, extruder, helper, merger, sorter
 from .topologies import loop_cutter
@@ -17,7 +17,7 @@ def points_to_positions(points: Sequence[Point]) -> Iterator[Vector3]:
 def add_point(
     geo: Geometry,
     position: Vector3,
-    attributes: dict[str, Any] | tuple[str, Any] | None = None,
+    attributes: dict[str | Attrib, Any] | tuple[str | Attrib, Any] | None = None,
 ) -> Point:
     return basic.add_point(geo, position, attributes)
 

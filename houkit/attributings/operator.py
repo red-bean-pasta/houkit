@@ -28,7 +28,7 @@ def add_attrib(
 
 def set_point_attrib(
     point: Point,
-    attribute: str,
+    attribute: str | hou.Attrib,
     value: str,
 ) -> None:
     point.setAttribValue(attribute, value)

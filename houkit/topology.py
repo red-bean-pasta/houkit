@@ -1,25 +1,39 @@
-from typing import Sequence, Iterator, Any
+from typing import Sequence, Iterator
 
-from hou import Geometry, Point, Prim, Vector3, Polygon, Face, Attrib
+from hou import Point, Prim, Vector3, Polygon
 
+from .topologies.sorter import Axis
 from .topologies import basic, extruder, helper, merger, sorter
 from .topologies import loop_cutter
 from .topologies import pentagon_handler, face_offseter
 from .topologies import splitter
-from .topologies.helper import Edge
-from .topologies.sorter import Axis
-
-
-def points_to_positions(points: Sequence[Point]) -> Iterator[Vector3]:
-    return basic.points_to_positions(points)
-
-
-def add_point(
-    geo: Geometry,
-    position: Vector3,
-    attributes: dict[str | Attrib, Any] | tuple[str | Attrib, Any] | None = None,
-) -> Point:
-    return basic.add_point(geo, position, attributes)
+# noinspection PyUnusedImports
+from .topologies.helper import (
+    Edge,
+    is_neighbor,
+    check_neighbors,
+    get_first_neighbor,
+    get_prims_normal,
+    get_prim_normal,
+    unique_prim_points,
+    get_edge_prim_count,
+    get_prim_centroid,
+    interpolate_point,
+    point_distance_to_line,
+    order_prim_points,
+    is_same_geo,
+)
+# noinspection PyUnusedImports
+from .topologies.basic import (
+    points_to_positions,
+    add_point,
+    offset_point,
+    fill_face,
+    fill_faces,
+    fill_face_by_attrib,
+)
+# noinspection PyUnusedImports
+from .topologies.face_offseter import partition_connected_prims
 
 
 def sort_points_by_position(
@@ -38,38 +52,6 @@ def sort_points_by_position(
     return sorter.sort_points_by_position(points, axis_order, axis_ascending, tolerance)
 
 
-def is_neighbor(p1: Point, p2: Point) -> bool:
-    return helper.is_neighbor(p1, p2)
-
-
-def check_neighbors(target: Point, samples: Sequence[Point]) -> list[Point]:
-    return helper.check_neighbors(target, samples)
-
-
-def get_first_neighbor(target: Point, samples: Sequence[Point]) -> Point | None:
-    return helper.get_first_neighbor(target, samples)
-
-
-def get_prims_normal(prims: Prim | Face | Sequence[Prim]) -> Vector3:
-    return helper.get_prims_normal(prims)
-
-
-def get_prim_normal(prim: Prim | Face) -> Vector3:
-    return helper.get_prim_normal(prim)
-
-
-def unique_prim_points(prims: Sequence[Prim]) -> list[Point]:
-    return helper.unique_prim_points(prims)
-
-
-def get_edge_prim_count(prims: Sequence[Prim]) -> dict[Edge, int]:
-    return helper.get_edge_prim_count(prims)
-
-
-def get_prim_centroid(prims: Prim | Sequence[Prim]) -> Vector3:
-    return helper.get_prim_centroid(prims)
-
-
 def find_prim(
     *points: Point
 ) -> Prim:
@@ -85,65 +67,12 @@ def find_prims(
     return helper.find_prims(reference, *rest)
 
 
-def interpolate_point(
-    p0: Point,
-    p1: Point,
-    ratio: float,
-) -> Vector3:
-    return helper.interpolate_point(p0, p1, ratio)
-
-
-def point_distance_to_line(
-    point: Point,
-    line: Edge | tuple[Point, Point],
-) -> float:
-    return helper.point_distance_to_line(point, line)
-
-
 def get_line_intersection(
     first_line: tuple[Point, Point],
     second_line: tuple[Point, Point],
 ) -> Vector3:
     """Return the projected intersection of two 3D lines on first line."""
     return helper.get_line_intersection(first_line, second_line)
-
-
-def order_prim_points(
-    points: Sequence[Point],
-    edge: tuple[Point, Point],
-    assert_count: int | None = None,
-) -> list[Point]:
-    return helper.order_prim_points(points, edge, assert_count)
-
-
-def offset_point(
-    point: Point,
-    offset: Vector3,
-) -> None:
-    basic.offset_point(point, offset)
-
-
-def fill_face(
-    points: Sequence[Point],
-    reverse: bool = False,
-) -> Polygon:
-    return basic.fill_face(points, reverse)
-
-
-def fill_faces(
-    points: list[list[Point]],
-    attributes: Sequence[tuple[dict[str, Any], list[str]]] | tuple[dict[str, Any], list[str]] = (),
-) -> list[Prim]:
-    return basic.fill_faces(points, attributes)
-
-
-def fill_face_by_attrib(
-    geo: Geometry,
-    attribute: str,
-    values: Sequence[str],
-    reverse_order: bool = False,
-) -> Polygon:
-    return basic.fill_face_by_attrib(geo, attribute, values, reverse_order)
 
 
 def traverse_faces_between_edges(
@@ -223,12 +152,6 @@ def outset(
     :return: List of newly generated outer border quad primitives.
     """
     return face_offseter.outset(prims, scalar, use_ratio, follow_existing_edge)
-
-
-def partition_connected_prims(
-    prims: list[Prim],
-) -> list[tuple[Prim]]:
-    return face_offseter.partition_connected_prims(prims)
 
 
 def loop_cut(
@@ -314,7 +237,3 @@ def split_point(
     Point and primitive attributes, including group membership, are preserved.
     """
     return splitter.split_point(prims, point)
-
-
-def is_same_geo(sequence: Sequence[Any]) -> bool:
-    return helper.is_same_geo(sequence)

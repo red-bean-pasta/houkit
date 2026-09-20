@@ -4,11 +4,32 @@ Utility functions for attribute-based identification, naming, and indexing of ge
 from typing import Sequence, Callable, Any, Iterator, Mapping
 
 import hou
-from hou import Geometry, Point, Prim, Vector3
+from hou import Geometry, Point, Vector3
 
-from .attributings import transferer, positional_attributer
-from .attributings import querier, operator
 from .topologies.sorter import Axis
+from .attributings import positional_attributer
+from .attributings import querier, operator
+# noinspection PyUnusedImports
+from .attributings.operator import (
+    add_attrib,
+    remove_attribs,
+    set_point_attrib,
+    set_points_attrib,
+)
+# noinspection PyUnusedImports
+from .attributings.querier import (
+    points_by_attrib,
+    points_start_with,
+    unique_points_by_attrib,
+    unique_points_start_with,
+    scan_indexed_attrib_range,
+)
+# noinspection PyUnusedImports
+from .attributings.transferer import (
+    copy_point_attribs,
+    collect_prim_attribs,
+    apply_prim_attribs,
+)
 
 
 def add_point_attrib(geo: Geometry, name: str, default: Any) -> hou.Attrib:
@@ -19,39 +40,6 @@ def add_prim_attrib(geo: Geometry, name: str, default: Any) -> hou.Attrib:
 
 def add_global_attrib(geo: Geometry, name: str, default: Any) -> hou.Attrib:
     return add_attrib(geo, hou.attribType.Global, name, default)
-
-def add_attrib(
-    geo: hou.Geometry,
-    cls: hou.attribType,
-    name: str,
-    default: Any,
-    skip_existing: bool = True,
-) -> hou.Attrib:
-    return operator.add_attrib(geo, cls, name, default, skip_existing)
-
-
-def set_point_attrib(
-    point: Point,
-    attribute: str,
-    value: str,
-) -> None:
-    operator.set_point_attrib(point, attribute, value)
-
-def set_points_attrib(
-    points: Sequence[Point],
-    attribute: str,
-    values: str | Sequence[str],
-) -> None:
-    operator.set_points_attrib(points, attribute, values)
-
-
-def remove_attribs(
-    geo: Geometry,
-    point_attributes: str | tuple[str, ...] | None = None,
-    prim_attributes: str | tuple[str, ...] | None = None,
-    global_attributes: str | tuple[str, ...] | None = None,
-) -> None:
-    operator.remove_attribs(geo, point_attributes, prim_attributes, global_attributes)
 
 
 def set_point_attribs_by_position(
@@ -78,37 +66,6 @@ def set_point_attribs_by_position(
     :param tolerance:
     """
     positional_attributer.set_point_attribs_by_position(points, attrib_name, name_prefix, axis_order, axis_ascending, start_index, special_labels, reuse_index_after_special, tolerance)
-
-
-def points_by_attrib(
-    source: Geometry | Prim | Sequence[Prim],
-    attribute: str,
-    skip_blank: bool = False,
-) -> dict[str, set[Point]]:
-    return querier.points_by_attrib(source, attribute, skip_blank)
-
-
-def points_start_with(
-    geo: Geometry,
-    attribute: str,
-    prefixes: str | tuple[str, ...],
-) -> list[Point]:
-    return querier.points_start_with(geo, attribute, prefixes)
-
-
-def unique_points_by_attrib(
-    source: Geometry | Prim | Sequence[Prim],
-    attribute: str,
-) -> dict[str, Point]:
-    return querier.unique_points_by_attrib(source, attribute)
-
-
-def unique_points_start_with(
-    geo: Geometry,
-    attribute: str,
-    prefixes: str | tuple[str, ...],
-) -> dict[str, dict[str, Point]]:
-    return querier.unique_points_start_with(geo, attribute, prefixes)
 
 
 def points_from_geo(
@@ -145,14 +102,6 @@ def latest_points_by_attrib(
     return querier.latest_points_by_attrib(geo, attribute, *values, assert_existing=assert_existing)
 
 
-def scan_indexed_attrib_range(
-    geo: Geometry,
-    attribute: str,
-    prefix: str,
-) -> tuple[int, int] | None:
-    return querier.scan_indexed_attrib_range(geo, attribute, prefix)
-
-
 def deduplicate_point_attribs(
     geo: Geometry,
     attribute: str,
@@ -186,21 +135,3 @@ def modify_point_attribs(
     :param rename: Transformation function returning new name or None to skip renaming.
     """
     operator.modify_point_attribs(geo, attribute, filtrate, rename)
-
-
-def copy_point_attribs(
-    src: Point,
-    dst: Point
-) -> None:
-    transferer.copy_point_attribs(src, dst)
-
-def collect_prim_attribs(
-    prims: Sequence[Prim],
-) -> list[tuple[dict[str, Any], list[str]]]:
-    return transferer.collect_prim_attribs(prims)
-
-def apply_prim_attribs(
-    prims: Sequence[Prim],
-    data: Sequence[tuple[dict[str, Any], list[str]]] | tuple[dict[str, Any], list[str]],
-) -> None:
-    transferer.apply_prim_attribs(prims, data)

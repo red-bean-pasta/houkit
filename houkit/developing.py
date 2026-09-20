@@ -1,7 +1,12 @@
 from pathlib import Path
 from typing import Callable
 
-from .developings import reloader, saver
+from .developings import saver
+
+# noinspection PyUnusedImports
+from .developings.reloader import (
+    reload_modules,
+)
 
 
 def save(
@@ -11,7 +16,3 @@ def save(
 ) -> None:
     """Execute a build callable and save to a Houdini .hip file, creating a backup in case the build fails."""
     saver.save(path, build, rebuild)
-
-
-def reload_modules() -> None:
-    reloader.reload_modules()

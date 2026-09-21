@@ -92,11 +92,11 @@ def point_distance_to_line(
     )
 
 
-def get_line_intersection(
+def line_intersect_line(
     first_line: tuple[Point, Point],
     second_line: tuple[Point, Point],
 ) -> Vector3:
-    return geomath.get_line_intersection(
+    return geomath.line_intersect_line(
         tuple(p.position() for p in first_line),
         tuple(p.position() for p in second_line),
     )

@@ -67,12 +67,12 @@ def find_prims(
     return helper.find_prims(reference, *rest)
 
 
-def get_line_intersection(
+def line_intersect_line(
     first_line: tuple[Point, Point],
     second_line: tuple[Point, Point],
 ) -> Vector3:
     """Return the projected intersection of two 3D lines on first line."""
-    return helper.get_line_intersection(first_line, second_line)
+    return helper.line_intersect_line(first_line, second_line)
 
 
 def traverse_faces_between_edges(

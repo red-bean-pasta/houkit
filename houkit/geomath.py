@@ -35,7 +35,7 @@ def rotate_positions(
     )
 
 
-def get_line_face_intersection(
+def line_intersect_face(
     line: tuple[Vector3, Vector3],
     face: tuple[Vector3, Vector3, Vector3],
     eps: float=1e-5
@@ -71,7 +71,7 @@ def point_distance_to_line(
     return v.cross(v_line).length() / len_line
 
 
-def get_line_intersection(
+def line_intersect_line(
     first_line: tuple[Vector3, Vector3],
     second_line: tuple[Vector3, Vector3],
 ) -> Vector3:

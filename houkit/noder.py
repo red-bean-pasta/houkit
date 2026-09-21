@@ -36,7 +36,7 @@ def get_control(node: hou.Node, name: str = "CONTROLS") -> OpNode:
 
 
 def sopify(
-    parent: SopNode,
+    parent: OpNode,
     input_node: SopNode | None,
     function: Callable[[], None] | Callable[[SopNode], None]
 ) -> SopNode:

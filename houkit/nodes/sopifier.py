@@ -1,11 +1,11 @@
 import inspect
 from typing import Callable
 
-from hou import SopNode
+from hou import SopNode, OpNode
 
 
 def sopify(
-    parent: SopNode,
+    parent: OpNode,
     input_node: SopNode | None,
     function: Callable[[], None] | Callable[[SopNode], None]
 ) -> SopNode:

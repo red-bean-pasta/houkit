@@ -6,7 +6,7 @@ from hou import SopNode, OpNode
 
 def sopify(
     parent: OpNode,
-    input_node: SopNode | None,
+    input_node: OpNode | None,
     function: Callable[[], None] | Callable[[SopNode], None]
 ) -> SopNode:
     assert "<locals>" not in function.__qualname__, "Python SOP functions must be module-level functions"

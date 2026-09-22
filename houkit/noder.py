@@ -37,10 +37,9 @@ def get_control(node: hou.Node, name: str = "CONTROLS") -> OpNode:
 
 def sopify(
     parent: OpNode,
-    input_node: SopNode | None,
+    input_node: OpNode | None,
     function: Callable[[], None] | Callable[[SopNode], None]
 ) -> SopNode:
     """Generate a Python SOP node invoking a given module-level python function."""
     return sopifier.sopify(parent, input_node, function)
-
 

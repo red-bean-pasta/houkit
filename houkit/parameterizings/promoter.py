@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Any, Sequence, Iterator, Self
 
-from hou import ParmTuple, LabelParmTemplate, labelParmType, OpNode
+from hou import Node, ParmTuple, LabelParmTemplate, labelParmType, OpNode
 
 from .operator import add_heading
 from ..formatter import snake_case, title_case
@@ -153,8 +153,8 @@ def _get_new_heading(
     return heading_factory(info)
 
 def _get_relative_path_components(
-    parent: OpNode,
-    child: OpNode,
+    parent: Node,
+    child: Node,
 ) -> list[str]:
     path = parent.relativePathTo(child)
     parts = [] if path == "." else path.split("/")
@@ -163,7 +163,7 @@ def _get_relative_path_components(
 
 
 def _find_children(
-    parent: OpNode,
+    parent: Node,
     depth: int | None,
     type_names: str | Sequence[str] | None = None,
     node_names: str | Sequence[str] | None = None,
@@ -199,7 +199,7 @@ def _find_children(
     return direct_children + descendants
 
 def _get_qualified_children(
-    children: Sequence[OpNode],
+    children: Sequence[Node],
     type_names: str | Sequence[str] | None,
     node_names: str | Sequence[str] | None,
 ) -> Iterator[OpNode]:

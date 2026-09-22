@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 import hou
-from hou import SopNode
+from hou import OpNode, SopNode
 
 from ..attributings.operator import add_attrib, remove_attribs
 from .sops import add_output
@@ -9,9 +9,9 @@ from .sopifier import sopify
 
 
 def add_outside_recalculation(
-    parent: SopNode,
+    parent: OpNode,
     name: str,
-    p_input: SopNode,
+    p_input: OpNode,
     reverse: bool = False,
 ) -> SopNode:
     subnet = _create_subnet(parent, name, p_input)
@@ -24,13 +24,13 @@ def add_outside_recalculation(
     return subnet
 
 
-def _create_subnet(parent: SopNode, name: str, p_input: SopNode) -> SopNode:
+def _create_subnet(parent: OpNode, name: str, p_input: OpNode) -> SopNode:
     subnet = parent.createNode("subnet", name)
     subnet.setInput(0, p_input)
     return subnet
 
 
-def _add_orient_polygons(subnet: SopNode) -> SopNode:
+def _add_orient_polygons(subnet: OpNode) -> SopNode:
     clean = subnet.createNode("clean", "orient_polygons")
     clean.setInput(0, subnet.indirectInputs()[0])
     _configure_clean(clean, orient_polygons=True)
@@ -38,8 +38,8 @@ def _add_orient_polygons(subnet: SopNode) -> SopNode:
 
 
 def _add_reverse_winding(
-    subnet: SopNode,
-    input_node: SopNode,
+    subnet: OpNode,
+    input_node: OpNode,
     reverse: bool,
 ) -> SopNode:
     clean = subnet.createNode("clean", "reverse_winding")
@@ -54,7 +54,7 @@ def _add_reverse_winding(
     return clean
 
 
-def _configure_clean(clean: SopNode, orient_polygons: bool) -> None:
+def _configure_clean(clean: OpNode, orient_polygons: bool) -> None:
     clean.parm("orientpoly").set(int(orient_polygons))
     for parameter in (
         "reversewinding",

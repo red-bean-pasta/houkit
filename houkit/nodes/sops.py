@@ -1,10 +1,10 @@
-from hou import SopNode, Vector3
+from hou import OpNode, SopNode, Vector3
 
 
 def add_merge(
-    parent: SopNode,
+    parent: OpNode,
     name: str,
-    *inputs: SopNode,
+    *inputs: OpNode,
 ) -> SopNode:
     merge = parent.createNode("merge", name)
     for index, node in enumerate(inputs):
@@ -12,18 +12,18 @@ def add_merge(
     return merge
 
 def add_fuse(
-    parent: SopNode,
+    parent: OpNode,
     name: str,
-    p_input: SopNode,
+    p_input: OpNode,
 ) -> SopNode:
     fuse = parent.createNode("fuse", name)
     fuse.setInput(0, p_input)
     return fuse
 
 def add_mirror(
-    parent: SopNode,
+    parent: OpNode,
     name: str,
-    p_input: SopNode,
+    p_input: OpNode,
     axis: Vector3 | tuple[float, float, float],
     keep_original: bool,
     consolidate_unshared: bool,
@@ -39,9 +39,9 @@ def add_mirror(
     return mirror
 
 def add_output(
-    parent: SopNode,
+    parent: OpNode,
     name: str,
-    p_input: SopNode,
+    p_input: OpNode,
 ) -> SopNode:
     output = parent.createNode("null", name)
     output.setInput(0, p_input)

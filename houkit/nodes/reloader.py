@@ -17,7 +17,7 @@ def add_reloadable_subnet(
     return subnet
 
 
-def add_reload_button(parent: SopNode, reload_fn: Callable = reload_modules) -> SopNode:
+def add_reload_button(parent: OpNode, reload_fn: Callable = reload_modules) -> SopNode:
     node = sopify(parent, None, reload_fn)
 
     templates = node.parmTemplateGroup()

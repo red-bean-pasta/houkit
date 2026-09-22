@@ -1,19 +1,19 @@
 from dataclasses import dataclass
 from typing import Callable, Any, Sequence, Iterator, Self
 
-from hou import SopNode, ParmTuple, LabelParmTemplate, labelParmType, Node
+from hou import ParmTuple, LabelParmTemplate, labelParmType, OpNode
 
-from ..formatter import snake_case, title_case
 from .operator import add_heading
+from ..formatter import snake_case, title_case
 
 
 @dataclass
 class ParmContext:
     data: Any
     parameter: ParmTuple
-    destination: SopNode
-    source: SopNode
-    heading_factory: Callable[[SopNode, SopNode], str]
+    destination: OpNode
+    source: OpNode
+    heading_factory: Callable[[OpNode, OpNode], str]
 
     @property
     def heading(self) -> str:
@@ -22,9 +22,9 @@ class ParmContext:
 
 @dataclass
 class PromoteFormatter:
-    heading_factory: Callable[[SopNode, SopNode], str] | None = None
-    child_parm_factory: Callable[[ParmContext], str] | None = None
-    child_heading_factory: Callable[[ParmContext], str] | None = None
+    heading_factory: Callable[[OpNode, OpNode], str] = None
+    child_parm_factory: Callable[[ParmContext], str] = None
+    child_heading_factory: Callable[[ParmContext], str] = None
 
     @classmethod
     def default(cls) -> Self:
@@ -42,14 +42,14 @@ class PromoteFormatter:
 
 
 def promote_children_parms(
-    parent: SopNode,
+    parent: OpNode,
     type_names: str | Sequence[str] | None,
     node_names: str | Sequence[str] | None = None,
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
-) -> list[SopNode]:
+) -> list[OpNode]:
     """
 
     :param parent:
@@ -74,8 +74,8 @@ def promote_children_parms(
 
 
 def promote_parms_from(
-    parent: SopNode,
-    child: SopNode,
+    parent: OpNode,
+    child: OpNode,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
@@ -132,7 +132,7 @@ def promote_parms_from(
             for source_parm, target_parm in zip(source, target):
                 source_parm.set(target_parm)
 
-def _format_heading_default(parent: SopNode, child: SopNode) -> str:
+def _format_heading_default(parent: OpNode, child: OpNode) -> str:
     parts = _get_relative_path_components(parent, child)
     return " > ".join(title_case(part) for part in parts)
 
@@ -163,8 +163,8 @@ def _get_new_heading(
     return heading_factory(info)
 
 def _get_relative_path_components(
-    parent: SopNode,
-    child: SopNode,
+    parent: OpNode,
+    child: OpNode,
 ) -> list[str]:
     path = parent.relativePathTo(child)
     parts = [] if path == "." else path.split("/")
@@ -173,11 +173,11 @@ def _get_relative_path_components(
 
 
 def _find_children(
-    parent: SopNode,
+    parent: OpNode,
     depth: int | None,
     type_names: str | Sequence[str] | None = None,
     node_names: str | Sequence[str] | None = None,
-) -> list[SopNode]:
+) -> list[OpNode]:
     if depth == 0:
         return []
     if depth is None:
@@ -200,17 +200,17 @@ def _find_children(
     return direct_children + descendants
 
 def _get_qualified_children(
-    children: Sequence[Node],
+    children: Sequence[OpNode],
     type_names: str | Sequence[str] | None,
     node_names: str | Sequence[str] | None,
-) -> Iterator[SopNode]:
+) -> Iterator[OpNode]:
     if isinstance(type_names, str):
         type_names = [type_names]
     if isinstance(node_names, str):
         node_names = [node_names]
 
     for c in children:
-        if not isinstance(c, SopNode):
+        if not isinstance(c, OpNode):
             continue
         if type_names and c.type().name() not in type_names:
             continue

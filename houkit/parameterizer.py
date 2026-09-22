@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from hou import SopNode, OpNode, Vector2, Vector3
+from hou import SopNode, OpNode, Vector2, Vector3, Node
 
 from .parameterizings import querier
 
@@ -46,12 +46,12 @@ def get_vector3_parm(node: OpNode, name: str) -> Vector3:
     )
 
 def promote_subnets(
-    parent: SopNode,
+    parent: Node,
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
-) -> list[SopNode]:
+) -> list[Node]:
     return promote_children_parms(
         parent,
         "subnet",
@@ -63,13 +63,13 @@ def promote_subnets(
     )
 
 def promote_controls(
-    parent: SopNode,
+    parent: Node,
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     control_node_name: str | Sequence[str] = ("CONTROLS", "CONTROL"),
     formatter: PromoteFormatter | None = None,
-) -> list[SopNode]:
+) -> list[Node]:
     return promote_children_parms(
         parent,
         None,

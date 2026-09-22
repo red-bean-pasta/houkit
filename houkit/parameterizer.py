@@ -49,6 +49,7 @@ def promote_subnets(
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
+    deepest_first: bool = True,
 ) -> list[OpNode]:
     return promote_children_parms(
         parent,
@@ -58,6 +59,7 @@ def promote_subnets(
         skip_parameters,
         dest_group,
         formatter,
+        deepest_first
     )
 
 def promote_controls(
@@ -67,6 +69,7 @@ def promote_controls(
     dest_group: str = "",
     control_node_name: str | Sequence[str] = ("CONTROLS", "CONTROL"),
     formatter: PromoteFormatter | None = None,
+    deepest_first: bool = True,
 ) -> list[OpNode]:
     return promote_children_parms(
         parent,
@@ -76,6 +79,7 @@ def promote_controls(
         skip_parameters,
         dest_group,
         formatter,
+        deepest_first,
     )
 
 def promote_parms_from_children(
@@ -108,6 +112,7 @@ def promote_children_parms(
     :param skip_parameters:
     :param dest_group: Parameter folder label, or an empty string for the parent root.
     :param formatter:
+    :param deepest_first: If True, deeper node is promoted first
     :return:
     """
     return promoter.promote_children_parms(

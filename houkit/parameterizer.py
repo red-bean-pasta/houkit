@@ -1,10 +1,8 @@
 from typing import Sequence
 
-from hou import SopNode, OpNode, Vector2, Vector3, Node
+from hou import OpNode, Vector2, Vector3
 
-from .parameterizings import querier
-
-from .parameterizings.querier import Parameters
+from .parameterizings import querier, promoter
 # noinspection PyUnusedImports
 from .parameterizings.operator import (
     add_folder,
@@ -14,9 +12,9 @@ from .parameterizings.operator import (
 # noinspection PyUnusedImports
 from .parameterizings.promoter import (
     PromoteFormatter,
-    promote_children_parms,
     promote_parms_from as promote_parms_from_child,
 )
+from .parameterizings.querier import Parameters
 # noinspection PyUnusedImports
 from .parameterizings.querier import (
     get_parm,
@@ -46,12 +44,12 @@ def get_vector3_parm(node: OpNode, name: str) -> Vector3:
     )
 
 def promote_subnets(
-    parent: Node,
+    parent: OpNode,
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
-) -> list[Node]:
+) -> list[OpNode]:
     return promote_children_parms(
         parent,
         "subnet",
@@ -63,13 +61,13 @@ def promote_subnets(
     )
 
 def promote_controls(
-    parent: Node,
+    parent: OpNode,
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     control_node_name: str | Sequence[str] = ("CONTROLS", "CONTROL"),
     formatter: PromoteFormatter | None = None,
-) -> list[Node]:
+) -> list[OpNode]:
     return promote_children_parms(
         parent,
         None,
@@ -81,11 +79,44 @@ def promote_controls(
     )
 
 def promote_parms_from_children(
-    parent: SopNode,
-    children: Sequence[SopNode],
+    parent: OpNode,
+    children: Sequence[OpNode],
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
 ) -> None:
     for c in children:
         promote_parms_from_child(parent, c, skip_parameters, dest_group, formatter)
+
+
+def promote_children_parms(
+    parent: OpNode,
+    type_names: str | Sequence[str] | None,
+    node_names: str | Sequence[str] | None = None,
+    depth: int | None = 1,
+    skip_parameters: str | tuple[str, ...] = (),
+    dest_group: str = "",
+    formatter: PromoteFormatter | None = None,
+    deepest_first: bool = True,
+) -> list[OpNode]:
+    """
+
+    :param parent:
+    :param type_names: None for every node type
+    :param node_names: None for all the node names
+    :param depth: None for search recursively
+    :param skip_parameters:
+    :param dest_group: Parameter folder label, or an empty string for the parent root.
+    :param formatter:
+    :return:
+    """
+    return promoter.promote_children_parms(
+        parent,
+        type_names,
+        node_names,
+        depth,
+        skip_parameters,
+        dest_group,
+        formatter,
+        deepest_first,
+    )

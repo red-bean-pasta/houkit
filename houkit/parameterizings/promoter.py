@@ -49,19 +49,9 @@ def promote_children_parms(
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     formatter: PromoteFormatter | None = None,
+    deepest_first: bool = True,
 ) -> list[OpNode]:
-    """
-
-    :param parent:
-    :param type_names: None for every node type
-    :param node_names: None for all the node names
-    :param depth: None for search recursively
-    :param skip_parameters:
-    :param dest_group: Parameter folder label, or an empty string for the parent root.
-    :param formatter:
-    :return:
-    """
-    children = _find_children(parent, depth, type_names, node_names)
+    children = _find_children(parent, depth, type_names, node_names, deepest_first)
     for child in children:
         promote_parms_from(
             parent,
@@ -177,6 +167,7 @@ def _find_children(
     depth: int | None,
     type_names: str | Sequence[str] | None = None,
     node_names: str | Sequence[str] | None = None,
+    deepest_first: bool = True,
 ) -> list[OpNode]:
     if depth == 0:
         return []
@@ -195,8 +186,16 @@ def _find_children(
     descendants = list(
         descendant
         for child in parent.children()
-        for descendant in _find_children(child, depth - 1, type_names, node_names)
+        for descendant in _find_children(
+            child,
+            depth - 1,
+            type_names,
+            node_names,
+            deepest_first,
+        )
     )
+    if deepest_first:
+        return descendants + direct_children
     return direct_children + descendants
 
 def _get_qualified_children(

@@ -1,4 +1,7 @@
-from hou import attribType, Geometry, attribData
+from hou import attribType, Geometry, attribData, Vector3, Point, Matrix3, Matrix4, Quaternion
+
+from houkit.attributings.querier import unique_points_by_attrib
+from houkit.topology import get_alignment_rotation
 
 
 def write_skinning_capture_attribs(
@@ -22,3 +25,17 @@ def write_skinning_capture_attribs(
         w = weights[p.number()]
         p.setAttribValue(idx_attr, tuple(item[0] for item in w))
         p.setAttribValue(data_attr, tuple(item[1] for item in w))
+
+
+def get_named_point_alignment_rotation(
+    geo: Geometry,
+    start_joint: str,
+    middle_joint: str,
+    end_joint: str,
+) -> Vector3:
+    points = unique_points_by_attrib(geo, "name")
+    return get_alignment_rotation(
+        points[start_joint],
+        points[middle_joint],
+        points[end_joint],
+    )

@@ -1,6 +1,6 @@
 from typing import Sequence, Iterator
 
-from hou import Point, Prim, Vector3, Polygon
+from hou import Point, Prim, Vector3, Polygon, Matrix3
 
 from .topologies.sorter import Axis
 from .topologies import basic, extruder, helper, merger, sorter
@@ -73,6 +73,22 @@ def line_intersect_line(
 ) -> Vector3:
     """Return the projected intersection of two 3D lines on first line."""
     return helper.line_intersect_line(first_line, second_line)
+
+
+def get_alignment_rotation(
+    start: Point,
+    middle: Point,
+    end: Point,
+    middle_transform: Matrix3 | None = None,
+) -> Vector3:
+    """Get the rotation needed for ``middle_joint-end_joint`` to be on the same line with ``start_joint-middle_joint``
+
+    :param start:
+    :param middle:
+    :param end:
+    :param middle_transform: If None, will try read from attribute "transform"
+    """
+    return helper.get_alignment_rotation(start, middle, end, middle_transform)
 
 
 def traverse_faces_between_edges(

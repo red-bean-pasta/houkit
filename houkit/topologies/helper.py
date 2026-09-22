@@ -1,6 +1,6 @@
 from typing import Sequence, Any, Iterator
 
-from hou import Vector3, Prim, Point, Face
+from hou import Vector3, Prim, Point, Face, Matrix3, Matrix4, Quaternion
 
 from .. import geomath
 
@@ -190,6 +190,29 @@ def order_prim_points(
     else:
         # return [points[(idx_a - k) % l] for k in range(l)] # To avoid face flipping
         return [points[(idx_b + k) % l] for k in range(l)]
+
+
+def get_alignment_rotation(
+    start: Point,
+    middle: Point,
+    end: Point,
+    middle_transform: Matrix3 | None = None,
+) -> Vector3:
+    if middle_transform is None:
+        middle_transform = Matrix4(
+            Matrix3(middle.attribValue("transform"))
+        )
+    middle_transform_inverse = middle_transform.inverted()
+
+    current_direction = (end.position() - middle.position()).normalized()
+    target_direction = (middle.position() - start.position()).normalized()
+    current_local = current_direction.multiplyAsDir(middle_transform_inverse)
+    target_local = target_direction.multiplyAsDir(middle_transform_inverse)
+
+    rotation = Quaternion()
+    rotation.setToVectors(current_local, target_local)
+    rotation_matrix = Matrix4(rotation.extractRotationMatrix3())
+    return rotation_matrix.extractRotates("srt", "xyz")
 
 
 def traverse_faces_between_edges(

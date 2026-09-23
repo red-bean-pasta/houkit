@@ -20,6 +20,7 @@ from .nodes.sops import (
     add_fuse,
     add_mirror,
     add_output,
+    add_rig_pose,
 )
 
 

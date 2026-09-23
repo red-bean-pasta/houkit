@@ -48,3 +48,25 @@ def add_output(
     output.setDisplayFlag(True)
     output.setRenderFlag(True)
     return output
+
+def add_rig_pose(
+    parent_node: OpNode,
+    input_node: SopNode,
+    *rotations: tuple[str, Vector3]
+) -> SopNode:
+    """
+
+    :param parent_node:
+    :param input_node:
+    :param rotations: rotations in xyz in srt order
+    """
+    pose = parent_node.createNode("kinefx::rigpose", "rig_pose")
+    pose.setInput(0, input_node)
+
+    pose.parm("transformations").set(len(rotations))
+    for index, (name, rotation) in enumerate(rotations):
+        pose.parm(f"group{index}").set(f"@name={name}")
+        pose.parm(f"xOrd{index}").set("srt")
+        pose.parm(f"rOrd{index}").set("xyz")
+        pose.parmTuple(f"r{index}").set(tuple(rotation))
+    return pose

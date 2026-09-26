@@ -9,6 +9,7 @@ def sopify(
     input_node: OpNode | None,
     function: Callable[[], None] | Callable[[SopNode], None]
 ) -> SopNode:
+    """Generate a Python SOP node invoking a given module-level python function."""
     assert "<locals>" not in function.__qualname__, "Python SOP functions must be module-level functions"
 
     module = function.__module__

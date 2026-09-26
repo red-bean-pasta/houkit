@@ -12,6 +12,14 @@ def fill_pentagon(
     midpoint_edge: tuple[Point, Point],
     reverse_order: bool = False,
 ) -> tuple[Point, Point]:
+    """
+    Subdivide a pentagon into 3 quads by placing a midpoint on one edge and an internal floating point.
+
+    :param points: 5 cyclic points of the pentagon.
+    :param midpoint_edge: Tuple of 2 adjacent points defining the edge to split.
+    :param reverse_order:
+    :return: Tuple of (midpoint on specified midpoint_edge, interior float point).
+    """
     ordered = order_prim_points(points, midpoint_edge, 5)
     p0, p1, p2, p3, p4 = ordered
 
@@ -40,6 +48,15 @@ def fill_pentagon_with_buffer(
     midpoint_edge: tuple[Point, Point],
     reverse_order: bool = False,
 ) -> tuple[Point, Point, Point, Point]:
+    """Subdivide a pentagon with a buffer quad adjacent to buffer_edge, then subdivide the remainder into 3 quads.
+
+    :param points: 5 cyclic points of the pentagon.
+    :param buffer_edge: Tuple of 2 adjacent points defining the edge to buffer.
+    :param buffer_ratio: Ratio along the connected edges from buffer_edge (in [0, 1)).
+    :param midpoint_edge: Tuple of 2 adjacent points defining the edge to split in the pentagon.
+    :param reverse_order:
+    :return: Tuple of (midpoint, interior float point, buffer_point_a, buffer_point_b).
+    """
     assert 0.0 <= buffer_ratio < 1.0, f"buffer_ratio must be in [0.0, 1.0), got {buffer_ratio}"
     assert set(midpoint_edge) != set(buffer_edge), f"midpoint_edge {midpoint_edge} cannot be buffer_edge {buffer_edge}"
 

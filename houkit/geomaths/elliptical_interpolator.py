@@ -87,6 +87,26 @@ def interpolate_conic(
         normal0: hou.Vector3,
         normal1: hou.Vector3,
 ) -> Callable[[float], tuple[tuple[hou.Vector3, hou.Vector3], ...]]:
+    """
+    Construct a planar conic passing through p0, p1, p2 with normals normal0 at p0 and normal1 at p1.
+
+    The method projects the 3D problem into a 2D local orthonormal coordinate plane:
+      - along_axis: direction from p0 to p1
+      - across_axis: in-plane normal orthogonal to along_axis
+    It sets up an algebraic conic equation:
+      A * x² + B * x * y + C * y² + D * x + E * y = 0
+    where (x, y) = (along, across) with p0 at (0, 0).
+    The remaining 4 constraints (passage through p1, p2, and normal directions at p0, p1)
+    form a 4x5 linear system solved via SVD for the 1D null space.
+
+    :param p0: First point on conic (origin of the local 2D coordinate system).
+    :param p1: Second point on conic.
+    :param p2: Intermediate third point on conic.
+    :param normal0: Inward normal vector at p0.
+    :param normal1: Inward normal vector at p1.
+    :return: A function that accepts a signed distance along the p0->p1 axis,
+             and returns 0, 1, or 2 point and normal pairs in 3D space on the conic.
+    """
     vector0 = p0.position() if isinstance(p0, hou.Point) else hou.Vector3(p0)
     vector1 = p1.position() if isinstance(p1, hou.Point) else hou.Vector3(p1)
     vector2 = p2.position() if isinstance(p2, hou.Point) else hou.Vector3(p2)
@@ -189,6 +209,7 @@ def get_point_on_ellipse_2d(
         side_end: hou.Vector3,
         rad_from_y: float = math.pi / 4,
 ) -> hou.Vector3:
+    """Evaluate a point on a planar ellipse arc parameterized by its semi-axes vectors."""
     v_upper = vertical_end - origin
     v_left = side_end - origin
 

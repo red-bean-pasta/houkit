@@ -96,6 +96,7 @@ def line_intersect_line(
     first_line: tuple[Point, Point],
     second_line: tuple[Point, Point],
 ) -> Vector3:
+    """Return the projected intersection of two 3D lines on first line."""
     return geomath.line_intersect_line(
         tuple(p.position() for p in first_line),
         tuple(p.position() for p in second_line),
@@ -198,6 +199,13 @@ def get_alignment_rotation(
     end: Point,
     middle_transform: Matrix3 | None = None,
 ) -> Vector3:
+    """Get the rotation needed for ``middle_joint-end_joint`` to be on the same line with ``start_joint-middle_joint``
+
+    :param start:
+    :param middle:
+    :param end:
+    :param middle_transform: If None, will try read from attribute "transform"
+    """
     if middle_transform is None:
         middle_transform = Matrix4(
             Matrix3(middle.attribValue("transform"))
@@ -221,6 +229,14 @@ def traverse_faces_between_edges(
     side_point: Point | None = None,
     limit: int = 100,
 ) -> list[Prim]:
+    """
+
+    :param edge_start:
+    :param edge_end:
+    :param side_point: Optional point to disambiguate the traverse direction. This point must be share a quad with edge_start.
+    :param limit: Maximum count of returned faces
+    :return:
+    """
     p1, p2 = edge_start
     target_pts = set(edge_end)
 

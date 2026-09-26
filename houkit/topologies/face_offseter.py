@@ -46,6 +46,19 @@ def outset(
     use_ratio: bool = False,
     follow_existing_edge: bool = True,
 ) -> dict[tuple[Prim, ...], list[Prim]]:
+    """Perform an outset operation on a collection of polygon primitives.
+    - Groups primitives into connected components and outsets each component independently.
+    - Offsets boundary vertices outward by distance or ratio and generates border quad faces around the exterior.
+    - If scalar is negative, delegates to inset.
+    - Preserves primitive attributes and primitive group memberships on newly created border primitives.
+    - Preserves point attributes and group memberships on newly generated outset points.
+
+    :param prims: List of polygon primitives to outset.
+    :param scalar: Offset ratio or world distance. Negative values trigger inset.
+    :param use_ratio: If True, scalar is interpreted as a ratio; otherwise as absolute distance.
+    :param follow_existing_edge:
+    :return: List of newly generated outer border quad primitives.
+    """
     if not prims or scalar == 0:
         return {tuple(prims): []}
     if scalar < 0:

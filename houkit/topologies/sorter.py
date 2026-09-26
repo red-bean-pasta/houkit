@@ -16,6 +16,13 @@ def sort_points_by_position(
     axis_ascending: tuple[bool, bool, bool] = (True, True, True),
     tolerance: float = 1e-5,
 ) -> list[Point]:
+    """
+
+    :param points:
+    :param axis_order: Axes to compare, from highest to lowest priority.
+    :param axis_ascending: Sort direction for each axis in ``axis_order``. ``True`` placing smaller coordinates first.
+    :param tolerance:
+    """
     return sorted(
         points,
         key=lambda point: _position_sort_key(point, axis_order, axis_ascending, tolerance),

@@ -11,6 +11,7 @@ def save(
     build: Callable[[], None],
     rebuild: bool = True,
 ) -> None:
+    """Execute a build callable and save to a Houdini .hip file, creating a backup in case the build fails."""
     assert path.is_absolute(), "Require absolute path"
 
     if path.exists() and not rebuild:

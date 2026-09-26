@@ -30,6 +30,7 @@ def get_parms(
     exclude_internal: bool = True,
     use_tuple: bool = True,
 ) -> Parameters:
+    """Read all evaluated parameters on a node into a dot-accessible Parameters dictionary."""
     params = Parameters()
 
     for pt in node.parmTuples():

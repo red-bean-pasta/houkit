@@ -1,9 +1,5 @@
-from typing import Callable
-
 import hou
-from hou import SopNode, OpNode
-
-from .nodes import sopifier
+from hou import OpNode
 
 # noinspection PyUnusedImports
 from .nodes.reloader import (
@@ -22,6 +18,10 @@ from .nodes.sops import (
     add_output,
     add_rig_pose,
 )
+# noinspection PyUnusedImports
+from .nodes.sopifier import (
+    sopify,
+)
 
 
 def get_parent(node: hou.Node) -> OpNode:
@@ -34,13 +34,3 @@ def get_control(node: hou.Node, name: str = "CONTROLS") -> OpNode:
     control = target.node(name)
     assert control is not None, f"Expected CONTROL node under {target}"
     return control
-
-
-def sopify(
-    parent: OpNode,
-    input_node: OpNode | None,
-    function: Callable[[], None] | Callable[[SopNode], None]
-) -> SopNode:
-    """Generate a Python SOP node invoking a given module-level python function."""
-    return sopifier.sopify(parent, input_node, function)
-

@@ -71,6 +71,13 @@ def modify_point_attribs(
     filtrate: Callable[[Point], bool],
     rename: Callable[[str], str | None],
 ) -> None:
+    """Conditionally rename point attribute values matching a filter.
+
+    :param geo: The Houdini geometry.
+    :param attribute: The point attribute name.
+    :param filtrate: Predicate to decide if point should be considered.
+    :param rename: Transformation function returning new name or None to skip renaming.
+    """
     for point in geo.points():
         if not filtrate(point):
             continue
@@ -90,6 +97,15 @@ def deduplicate_point_attribs(
     add_affix: bool = False,
     keep_first: bool = True,
 ) -> None:
+    """
+    Deduplicate string attributes on points by either clearing duplicates or affixing sequential indices.
+
+    :param geo: The Houdini geometry.
+    :param attribute: The point attribute name.
+    :param prefix: Optional prefix to filter points.
+    :param add_affix: If true, affixes like "_1", "_2" will be added; otherwise duplicates after the first are cleared.
+    :param keep_first: If true, first encountered point will keep the attribute, else the last;
+    """
     points = points_start_with(geo, attribute, prefix) if prefix else geo.points()
     grouped: defaultdict[str, list[Point]] = defaultdict(list)
     for p in points:

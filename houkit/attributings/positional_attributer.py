@@ -16,6 +16,18 @@ def set_point_attribs_by_position(
     reuse_index_after_special: bool = True,
     tolerance: float = 1e-5,
 ) -> None:
+    """Set an indexed string attribute on points ordered by position.
+
+    :param points: Points to label. The input sequence is not reordered.
+    :param attrib_name: Name of the point attribute to set.
+    :param name_prefix: Prefix for generated attribute values.
+    :param axis_order: Axes to compare, from highest to lowest priority.
+    :param axis_ascending: Sort direction for each axis in ``axis_order``. ``True`` placing smaller coordinates first.
+    :param start_index: Numeric suffix assigned to the first sorted point.
+    :param special_labels: Replacement labels keyed by their generated index.
+    :param reuse_index_after_special: Whether special labels leave the next regular numeric suffix unchanged.
+    :param tolerance:
+    """
     sorted_points = sort_points_by_position(points, axis_order, axis_ascending, tolerance)
 
     next_numeric_index = start_index

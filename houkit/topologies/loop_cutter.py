@@ -32,6 +32,21 @@ def loop_cut(
     use_ratio: bool = True,
     scope: list[Prim] | None = None,
 ) -> dict[tuple[Point, Point], tuple[Prim, Prim]]:
+    """Perform a loop cut across adjacent quads starting from a specified edge of a quad primitive.
+
+    - Places points interpolated between the start side and end side of each quad's cut edge.
+    - Propagates across quad topology in both directions from the starting edge until reaching an open boundary, non-quad geometry, out-of-scope primitive, or looping back.
+    - Deletes affected primitives and refills faces (end-side faces first, followed by start-side faces).
+    - Preserves all primitive attributes and primitive group memberships across divided primitives.
+
+    :param prim: The initial quad primitive.
+    :param start_point: Starting point of the initial edge to cut.
+    :param end_point: Ending point of the initial edge to cut.
+    :param scalar: Ratio (in [0, 1]) or distance from start_point along the edge.
+    :param use_ratio: If True, scalar is interpreted as a ratio; otherwise as a distance.
+    :param scope: Optional list of primitives to restrict propagation to.
+    :return: Tuple of (added_points, start_side_prims).
+    """
     _validate_loop_cut_input(prim, scope)
 
     geo = prim.geometry()

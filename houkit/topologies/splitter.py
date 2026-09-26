@@ -11,6 +11,11 @@ def split_point(
     prims: Prim | Sequence[Prim],
     point: Point,
 ) -> tuple[Point, list[Prim]]:
+    """Split ``point`` from the selected primitives.
+
+    The selected primitives are rebuilt with a new point at the same position.
+    Point and primitive attributes, including group membership, are preserved.
+    """
     if isinstance(prims, Prim):
         prims = (prims,)
 

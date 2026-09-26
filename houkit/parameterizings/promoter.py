@@ -51,6 +51,18 @@ def promote_children_parms(
     formatter: PromoteFormatter | None = None,
     deepest_first: bool = True,
 ) -> list[OpNode]:
+    """
+
+    :param parent:
+    :param type_names: None for every node type
+    :param node_names: None for all the node names
+    :param depth: None for search recursively
+    :param skip_parameters:
+    :param dest_group: Parameter folder label, or an empty string for the parent root.
+    :param formatter:
+    :param deepest_first: If True, deeper node is promoted first
+    :return:
+    """
     children = _find_children(parent, depth, type_names, node_names, deepest_first)
     for child in children:
         promote_parms_from(

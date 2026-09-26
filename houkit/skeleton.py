@@ -1,4 +1,4 @@
-from hou import attribType, Geometry, attribData, Vector3, Point, Matrix3, Matrix4, Quaternion
+from hou import attribType, Geometry, attribData, Vector3
 
 from houkit.attributings.querier import unique_points_by_attrib
 from houkit.topology import get_alignment_rotation

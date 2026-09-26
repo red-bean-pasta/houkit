@@ -9,6 +9,12 @@ from .basic import fill_faces
 def merge_points(
         pairs: Sequence[tuple[Point, Point]] | tuple[Point, Point],
 ) -> None:
+    """
+    Merge multiple (target_point, source_point) pairs simultaneously.
+    - For each pair (target, source), replaces all occurrences of `source` in attached primitives with `target`.
+    - Deletes `source` points.
+    - Reconstructs affected primitives preserving primitive attributes and primitive group memberships.
+    """
     if _is_single_data(pairs):
         pairs = (pairs,)
     if not pairs:

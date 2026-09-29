@@ -1,46 +1,13 @@
-from dataclasses import dataclass
-from typing import Callable, Any, Sequence, Iterator, Self
+from typing import Sequence, Iterator
 
 from hou import Node, ParmTuple, OpNode, ParmTemplate, FolderSetParmTemplate
 
-from .operator import add_heading
-from ..formatter import snake_case, title_case
+from ..formatter import snake_case
 
 
 UNPROMOTABLE: tuple[type[ParmTemplate]] = (
     FolderSetParmTemplate,
 )
-
-
-@dataclass
-class ParmContext:
-    data: Any
-    parameter: ParmTuple
-    destination: OpNode
-    source: OpNode
-    heading_factory: Callable[[OpNode, OpNode], str]
-
-    @property
-    def heading(self) -> str:
-        return self.heading_factory(self.destination, self.source)
-
-
-@dataclass
-class PromoteFormatter:
-    heading_factory: Callable[[OpNode, OpNode], str] = None
-    child_parm_factory: Callable[[ParmContext], str] = None
-
-    @classmethod
-    def default(cls) -> Self:
-        f = cls()
-        f.normalize()
-        return f
-
-    def normalize(self) -> None:
-        if not self.heading_factory:
-            self.heading_factory = _format_heading_default
-        if not self.child_parm_factory:
-            self.child_parm_factory = _format_child_parm_default
 
 
 def promote_children_parms(
@@ -50,7 +17,6 @@ def promote_children_parms(
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
-    formatter: PromoteFormatter | None = None,
     deepest_first: bool = True,
 ) -> list[OpNode]:
     """
@@ -61,7 +27,6 @@ def promote_children_parms(
     :param depth: None for search recursively
     :param skip_parameters:
     :param dest_group: Parameter folder label, or an empty string for the parent root.
-    :param formatter:
     :param deepest_first: If True, deeper node is promoted first
     :return:
     """
@@ -72,7 +37,6 @@ def promote_children_parms(
             child,
             skip_parameters,
             dest_group,
-            formatter
         )
     return children
 
@@ -82,21 +46,10 @@ def promote_parms_from(
     child: OpNode,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
-    formatter: PromoteFormatter | None = None,
 ) -> None:
     """Expose spare parameters from child node onto parent node and link them via expressions."""
-    if not formatter:
-        formatter = PromoteFormatter.default()
-    formatter.normalize()
     if not isinstance(skip_parameters, tuple):
         skip_parameters = (skip_parameters,)
-    info = ParmContext(
-        data=None,
-        parameter=None,
-        source=child,
-        destination=parent,
-        heading_factory=formatter.heading_factory,
-    )
     parameters = list(
         parameter for parameter in child.parmTuples()
         if parameter[0].isSpare()
@@ -107,17 +60,9 @@ def promote_parms_from(
     if len(parameters) < 1:
         return
 
-    heading = formatter.heading_factory(parent, child)
-    add_heading(
-        parent,
-        heading,
-        name=snake_case(heading.replace(" > ", "_")),
-        folder_label=dest_group,
-    )
-
     template_group = parent.parmTemplateGroup()
     for source in parameters:
-        name = _get_new_parm_name(source, info, formatter.child_parm_factory)
+        name = _format_child_parm_default(parent, child, source.name())
         param = source.parmTemplate().clone()
         param.setName(name)
         if dest_group:
@@ -127,31 +72,17 @@ def promote_parms_from(
     parent.setParmTemplateGroup(template_group)
 
     for source in parameters:
-        name = _get_new_parm_name(source, info, formatter.child_parm_factory)
+        name = _format_child_parm_default(parent, child, source.name())
         target = parent.parmTuple(name)
         target.set(source.eval())
         for source_parm, target_parm in zip(source, target):
             source_parm.set(target_parm)
 
 
-def _format_heading_default(parent: OpNode, child: OpNode) -> str:
+def _format_child_parm_default(parent: OpNode, child: OpNode, parm_name: str) -> str:
     parts = _get_relative_path_components(parent, child)
-    return " > ".join(title_case(part) for part in parts)
-
-
-def _format_child_parm_default(parameter: ParmContext) -> str:
-    prefix = snake_case(parameter.heading.replace(" > ", "_"))
-    return f"{prefix}_{parameter.data}" if prefix else str(parameter.data)
-
-
-def _get_new_parm_name(
-    parameter: ParmTuple,
-    info: ParmContext,
-    parameter_factory: Callable[[ParmContext], str]
-) -> str:
-    info.data = parameter.name()
-    info.parameter = parameter
-    return parameter_factory(info)
+    prefix = snake_case("_".join(parts))
+    return f"{prefix}_{parm_name}" if prefix else str(parm_name)
 
 
 def _get_relative_path_components(

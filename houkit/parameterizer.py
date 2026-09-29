@@ -10,7 +10,6 @@ from .parameterizings.operator import (
 )
 # noinspection PyUnusedImports
 from .parameterizings.promoter import (
-    PromoteFormatter,
     promote_children_parms,
     promote_parms_from as promote_parms_from_child,
 )
@@ -40,7 +39,6 @@ def promote_subnets(
     depth: int | None = 1,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
-    formatter: PromoteFormatter | None = None,
     deepest_first: bool = True,
 ) -> list[OpNode]:
     return promote_children_parms(
@@ -50,7 +48,6 @@ def promote_subnets(
         depth,
         skip_parameters,
         dest_group,
-        formatter,
         deepest_first
     )
 
@@ -60,7 +57,6 @@ def promote_controls(
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     control_node_name: str | Sequence[str] = ("CONTROLS", "CONTROL"),
-    formatter: PromoteFormatter | None = None,
     deepest_first: bool = True,
 ) -> list[OpNode]:
     return promote_children_parms(
@@ -70,7 +66,6 @@ def promote_controls(
         depth,
         skip_parameters,
         dest_group,
-        formatter,
         deepest_first,
     )
 
@@ -79,7 +74,6 @@ def promote_parms_from_children(
     children: Sequence[OpNode],
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
-    formatter: PromoteFormatter | None = None,
 ) -> None:
     for c in children:
-        promote_parms_from_child(parent, c, skip_parameters, dest_group, formatter)
+        promote_parms_from_child(parent, c, skip_parameters, dest_group)

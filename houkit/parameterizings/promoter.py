@@ -183,10 +183,14 @@ def _find_children(
 ) -> list[OpNode]:
     if depth == 0:
         return []
+    
     if depth is None:
-        return list(
+        children = list(
             _get_qualified_children(parent.allSubChildren(), type_names, node_names)
         )
+        if deepest_first:
+            children.sort(key=lambda n: len(n.path().split("/")), reverse=True)
+        return children
     assert depth > 0, "depth must be non-negative or None"
 
     direct_children = list(

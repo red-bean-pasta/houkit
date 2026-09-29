@@ -13,8 +13,15 @@ from hou import (
 
 from ..formatter import snake_case
 
-UNPROMOTABLE: tuple[type[ParmTemplate]] = (
+
+UNPROMOTABLE: tuple[type[ParmTemplate], ...] = (
     FolderSetParmTemplate,
+)
+
+MULTIPARM_FOLDER_TYPES = (
+    folderType.MultiparmBlock,
+    folderType.ScrollingMultiparmBlock,
+    folderType.TabbedMultiparmBlock,
 )
 
 
@@ -53,23 +60,23 @@ def promote_parms_from(
     dest_group: str = "",
 ) -> bool:
     """Expose spare parameters from child node onto parent node and link them via expressions."""
-    parameters = _get_promotable_parameters(child, skip_parameters)
-    if not parameters:
+    if not isinstance(skip_parameters, tuple):
+        skip_parameters = (skip_parameters,)
+
+    grouped_parms, parm_tuples = _get_grouped_parms(parent, child, skip_parameters)
+    if not grouped_parms:
         return False
 
     template_group = parent.parmTemplateGroup()
     folder_path = _ensure_folder_path(template_group, parent, child, dest_group, skip_parameters)
-    for source in parameters:
-        name = _format_child_parm_default(parent, child, source.name())
-        param = source.parmTemplate().clone()
-        param.setName(name)
+    for parm in grouped_parms:
         if folder_path:
-            template_group.appendToFolder(folder_path, param)
+            template_group.appendToFolder(folder_path, parm)
         else:
-            template_group.append(param)
+            template_group.append(parm)
     parent.setParmTemplateGroup(template_group)
 
-    for source in parameters:
+    for source in parm_tuples:
         name = _format_child_parm_default(parent, child, source.name())
         target = parent.parmTuple(name)
         target.set(source.eval())
@@ -78,12 +85,103 @@ def promote_parms_from(
     return True
 
 
+def _get_grouped_parms(
+    parent: OpNode,
+    child: OpNode,
+    skip_parameters: tuple[str, ...] = (),
+) -> tuple[list[ParmTemplate], list[ParmTuple]]:
+    grouped_parms = []
+    parm_tuples = []
+    for entry in child.parmTemplateGroup().entries():
+        processed = _format_child_template(parent, child, entry, skip_parameters, parm_tuples)
+        if processed is not None:
+            grouped_parms.append(processed)
+    return grouped_parms, parm_tuples
+
+
+def _format_child_template(
+    parent: OpNode,
+    child: OpNode,
+    tmpl: ParmTemplate,
+    skip_parameters: tuple[str, ...],
+    parm_tuples: list[ParmTuple],
+) -> ParmTemplate | None:
+    if isinstance(tmpl, FolderParmTemplate):
+        if tmpl.folderType() in MULTIPARM_FOLDER_TYPES:
+            return _format_child_multiparm(parent, child, tmpl, skip_parameters, parm_tuples)
+        return _format_child_folder(parent, child, tmpl, skip_parameters, parm_tuples)
+
+    if tmpl.name() in skip_parameters:
+        return None
+    pt = child.parmTuple(tmpl.name())
+    if pt is None or not pt[0].isSpare() or isinstance(pt.parmTemplate(), UNPROMOTABLE):
+        return None
+
+    param = tmpl.clone()
+    param.setName(_format_child_parm_default(parent, child, param.name()))
+    parm_tuples.append(pt)
+    return param
+
+
+def _format_child_multiparm(
+    parent: OpNode,
+    child: OpNode,
+    tmpl: FolderParmTemplate,
+    skip_parameters: tuple[str, ...],
+    parm_tuples: list[ParmTuple],
+) -> FolderParmTemplate | None:
+    if tmpl.name() in skip_parameters:
+        return None
+    pt = child.parmTuple(tmpl.name())
+    if pt is None or not pt[0].isSpare():
+        return None
+
+    cloned = tmpl.clone()
+    cloned.setName(_format_child_parm_default(parent, child, cloned.name()))
+    sub_templates = []
+    for sub in tmpl.parmTemplates():
+        sub_cloned = sub.clone()
+        sub_cloned.setName(_format_child_parm_default(parent, child, sub_cloned.name()))
+        sub_templates.append(sub_cloned)
+    cloned.setParmTemplates(tuple(sub_templates))
+
+    parm_tuples.append(pt)
+    count = int(pt[0].eval())
+    for i in range(1, count + 1):
+        for sub in tmpl.parmTemplates():
+            inst_name = sub.name().replace("#", str(i))
+            inst_pt = child.parmTuple(inst_name)
+            if inst_pt is not None:
+                parm_tuples.append(inst_pt)
+    return cloned
+
+
+def _format_child_folder(
+    parent: OpNode,
+    child: OpNode,
+    tmpl: FolderParmTemplate,
+    skip_parameters: tuple[str, ...],
+    parm_tuples: list[ParmTuple],
+) -> FolderParmTemplate | None:
+    subs = []
+    for sub in tmpl.parmTemplates():
+        res = _format_child_template(parent, child, sub, skip_parameters, parm_tuples)
+        if res is not None:
+            subs.append(res)
+    if not subs:
+        return None
+    folder = tmpl.clone()
+    folder.setName(_format_child_parm_default(parent, child, folder.name()))
+    folder.setParmTemplates(tuple(subs))
+    return folder
+
+
 def _ensure_folder_path(
     ptg: ParmTemplateGroup,
     parent: Node,
     child: Node,
     dest_group: str = "",
-    skip_parameters: str | tuple[str, ...] = (),
+    skip_parameters: tuple[str, ...] = (),
 ) -> tuple[str, ...]:
     assert not dest_group or ptg.findFolder(dest_group) is not None, f"Cannot find destination group {dest_group}"
 
@@ -195,10 +293,8 @@ def _get_qualified_children(
 
 def _get_promotable_parameters(
     node: OpNode,
-    skip_parameters: str | tuple[str, ...] = (),
+    skip_parameters: tuple[str, ...] = (),
 ) -> list[ParmTuple]:
-    if not isinstance(skip_parameters, tuple):
-        skip_parameters = (skip_parameters,)
     return [
         parameter for parameter in node.parmTuples()
         if parameter[0].isSpare()

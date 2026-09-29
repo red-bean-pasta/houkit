@@ -22,6 +22,10 @@ from .nodes.sops import (
 from .nodes.sopifier import (
     sopify,
 )
+# noinspection PyUnusedImports
+from .nodes.merge_fuse import (
+    add_merge_fuse,
+)
 
 
 def get_parent(node: hou.Node) -> OpNode:

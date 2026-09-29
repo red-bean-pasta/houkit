@@ -1,15 +1,16 @@
-from hou import OpNode, SopNode, Vector3
+from hou import NetworkMovableItem, OpNode, SopNode, Vector3
 
 
 def add_merge(
     parent: OpNode,
     name: str,
-    *inputs: OpNode,
+    *inputs: NetworkMovableItem,
 ) -> SopNode:
     merge = parent.createNode("merge", name)
     for index, node in enumerate(inputs):
         merge.setInput(index, node)
     return merge
+
 
 def add_fuse(
     parent: OpNode,
@@ -19,6 +20,7 @@ def add_fuse(
     fuse = parent.createNode("fuse", name)
     fuse.setInput(0, p_input)
     return fuse
+
 
 def add_mirror(
     parent: OpNode,
@@ -38,6 +40,7 @@ def add_mirror(
     mirror.parm("consolidateunshared").set(consolidate_unshared)
     return mirror
 
+
 def add_output(
     parent: OpNode,
     name: str,
@@ -48,6 +51,7 @@ def add_output(
     output.setDisplayFlag(True)
     output.setRenderFlag(True)
     return output
+
 
 def add_rig_pose(
     parent_node: OpNode,

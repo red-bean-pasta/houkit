@@ -1,10 +1,15 @@
 from dataclasses import dataclass
 from typing import Callable, Any, Sequence, Iterator, Self
 
-from hou import Node, ParmTuple, LabelParmTemplate, labelParmType, OpNode
+from hou import Node, ParmTuple, LabelParmTemplate, labelParmType, OpNode, ParmTemplate, FolderSetParmTemplate
 
 from .operator import add_heading
 from ..formatter import snake_case, title_case
+
+
+UNPROMOTABLE: tuple[type[ParmTemplate]] = (
+    FolderSetParmTemplate,
+)
 
 
 @dataclass
@@ -97,7 +102,9 @@ def promote_parms_from(
     )
     parameters = list(
         parameter for parameter in child.parmTuples()
-        if parameter[0].isSpare() and parameter.name() not in skip_parameters
+        if parameter[0].isSpare()
+        and parameter.name() not in skip_parameters
+        and not isinstance(parameter.parmTemplate(), UNPROMOTABLE)
     )
 
     if len(parameters) < 1:
@@ -183,7 +190,7 @@ def _find_children(
 ) -> list[OpNode]:
     if depth == 0:
         return []
-    
+
     if depth is None:
         children = list(
             _get_qualified_children(parent.allSubChildren(), type_names, node_names)
@@ -191,6 +198,7 @@ def _find_children(
         if deepest_first:
             children.sort(key=lambda n: len(n.path().split("/")), reverse=True)
         return children
+
     assert depth > 0, "depth must be non-negative or None"
 
     direct_children = list(

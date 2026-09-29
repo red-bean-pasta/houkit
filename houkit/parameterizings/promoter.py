@@ -1,9 +1,17 @@
 from typing import Sequence, Iterator
 
-from hou import Node, ParmTuple, OpNode, ParmTemplate, FolderSetParmTemplate
+from hou import (
+    Node,
+    ParmTuple,
+    OpNode,
+    ParmTemplate,
+    ParmTemplateGroup,
+    FolderSetParmTemplate,
+    FolderParmTemplate,
+    folderType,
+)
 
 from ..formatter import snake_case
-
 
 UNPROMOTABLE: tuple[type[ParmTemplate]] = (
     FolderSetParmTemplate,
@@ -28,17 +36,14 @@ def promote_children_parms(
     :param skip_parameters:
     :param dest_group: Parameter folder label, or an empty string for the parent root.
     :param deepest_first: If True, deeper node is promoted first
-    :return:
+    :return: List of child nodes whose parameters were promoted.
     """
     children = _find_children(parent, depth, type_names, node_names, deepest_first)
+    promoted = []
     for child in children:
-        promote_parms_from(
-            parent,
-            child,
-            skip_parameters,
-            dest_group,
-        )
-    return children
+        if promote_parms_from(parent, child, skip_parameters, dest_group):
+            promoted.append(child)
+    return promoted
 
 
 def promote_parms_from(
@@ -46,27 +51,20 @@ def promote_parms_from(
     child: OpNode,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
-) -> None:
+) -> bool:
     """Expose spare parameters from child node onto parent node and link them via expressions."""
-    if not isinstance(skip_parameters, tuple):
-        skip_parameters = (skip_parameters,)
-    parameters = list(
-        parameter for parameter in child.parmTuples()
-        if parameter[0].isSpare()
-        and parameter.name() not in skip_parameters
-        and not isinstance(parameter.parmTemplate(), UNPROMOTABLE)
-    )
-
-    if len(parameters) < 1:
-        return
+    parameters = _get_promotable_parameters(child, skip_parameters)
+    if not parameters:
+        return False
 
     template_group = parent.parmTemplateGroup()
+    folder_path = _ensure_folder_path(template_group, parent, child, dest_group, skip_parameters)
     for source in parameters:
         name = _format_child_parm_default(parent, child, source.name())
         param = source.parmTemplate().clone()
         param.setName(name)
-        if dest_group:
-            template_group.appendToFolder(dest_group, param)
+        if folder_path:
+            template_group.appendToFolder(folder_path, param)
         else:
             template_group.append(param)
     parent.setParmTemplateGroup(template_group)
@@ -77,6 +75,44 @@ def promote_parms_from(
         target.set(source.eval())
         for source_parm, target_parm in zip(source, target):
             source_parm.set(target_parm)
+    return True
+
+
+def _ensure_folder_path(
+    ptg: ParmTemplateGroup,
+    parent: Node,
+    child: Node,
+    dest_group: str = "",
+    skip_parameters: str | tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    assert not dest_group or ptg.findFolder(dest_group) is not None, f"Cannot find destination group {dest_group}"
+
+    parts = _get_relative_path_components(parent, child)
+    current_label_path = [dest_group] if dest_group else []
+
+    for i in range(len(parts)):
+        sub_path = parts[:i + 1]
+        if i < len(parts) - 1:
+            ancestor = parent.node("/".join(sub_path))
+            if not isinstance(ancestor, OpNode) or not _get_promotable_parameters(ancestor, skip_parameters):
+                continue
+
+        folder_label = parts[i]
+        folder_name = "_".join(sub_path) + "_folder"
+        target_path = tuple(current_label_path + [folder_label])
+        if ptg.findFolder(target_path) is None:
+            new_folder = FolderParmTemplate(
+                folder_name,
+                folder_label,
+                folder_type=folderType.Collapsible,
+            )
+            if current_label_path:
+                ptg.appendToFolder(tuple(current_label_path), new_folder)
+            else:
+                ptg.append(new_folder)
+        current_label_path.append(folder_label)
+
+    return tuple(current_label_path)
 
 
 def _format_child_parm_default(parent: OpNode, child: OpNode, parm_name: str) -> str:
@@ -155,3 +191,17 @@ def _get_qualified_children(
         if node_names and c.name() not in node_names:
             continue
         yield c
+
+
+def _get_promotable_parameters(
+    node: OpNode,
+    skip_parameters: str | tuple[str, ...] = (),
+) -> list[ParmTuple]:
+    if not isinstance(skip_parameters, tuple):
+        skip_parameters = (skip_parameters,)
+    return [
+        parameter for parameter in node.parmTuples()
+        if parameter[0].isSpare()
+        and parameter.name() not in skip_parameters
+        and not isinstance(parameter.parmTemplate(), UNPROMOTABLE)
+    ]

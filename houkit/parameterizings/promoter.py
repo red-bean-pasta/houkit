@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Any, Sequence, Iterator, Self
 
-from hou import Node, ParmTuple, LabelParmTemplate, labelParmType, OpNode, ParmTemplate, FolderSetParmTemplate
+from hou import Node, ParmTuple, OpNode, ParmTemplate, FolderSetParmTemplate
 
 from .operator import add_heading
 from ..formatter import snake_case, title_case
@@ -29,7 +29,6 @@ class ParmContext:
 class PromoteFormatter:
     heading_factory: Callable[[OpNode, OpNode], str] = None
     child_parm_factory: Callable[[ParmContext], str] = None
-    child_heading_factory: Callable[[ParmContext], str] = None
 
     @classmethod
     def default(cls) -> Self:
@@ -42,8 +41,6 @@ class PromoteFormatter:
             self.heading_factory = _format_heading_default
         if not self.child_parm_factory:
             self.child_parm_factory = _format_child_parm_default
-        if not self.child_heading_factory:
-            self.child_heading_factory = _format_child_heading_default
 
 
 def promote_children_parms(
@@ -132,25 +129,20 @@ def promote_parms_from(
     for source in parameters:
         name = _get_new_parm_name(source, info, formatter.child_parm_factory)
         target = parent.parmTuple(name)
-        template = source.parmTemplate()
-        if isinstance(template, LabelParmTemplate) and template.labelParmType() == labelParmType.Heading:
-            text = _get_new_heading(source, info, formatter.child_heading_factory)
-            target[0].set(text)
-        else:
-            target.set(source.eval())
-            for source_parm, target_parm in zip(source, target):
-                source_parm.set(target_parm)
+        target.set(source.eval())
+        for source_parm, target_parm in zip(source, target):
+            source_parm.set(target_parm)
+
 
 def _format_heading_default(parent: OpNode, child: OpNode) -> str:
     parts = _get_relative_path_components(parent, child)
     return " > ".join(title_case(part) for part in parts)
 
+
 def _format_child_parm_default(parameter: ParmContext) -> str:
     prefix = snake_case(parameter.heading.replace(" > ", "_"))
     return f"{prefix}_{parameter.data}" if prefix else str(parameter.data)
 
-def _format_child_heading_default(parameter: ParmContext) -> str:
-    return parameter.heading + " > " + parameter.data
 
 def _get_new_parm_name(
     parameter: ParmTuple,
@@ -161,15 +153,6 @@ def _get_new_parm_name(
     info.parameter = parameter
     return parameter_factory(info)
 
-def _get_new_heading(
-    parameter: ParmTuple,
-    info: ParmContext,
-    heading_factory: Callable[[ParmContext], str]
-) -> str:
-    text = parameter[0].evalAsString()
-    info.data = text
-    info.parameter = parameter
-    return heading_factory(info)
 
 def _get_relative_path_components(
     parent: Node,
@@ -221,6 +204,7 @@ def _find_children(
     if deepest_first:
         return descendants + direct_children
     return direct_children + descendants
+
 
 def _get_qualified_children(
     children: Sequence[Node],

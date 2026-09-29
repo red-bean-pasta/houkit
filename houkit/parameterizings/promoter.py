@@ -33,6 +33,7 @@ def promote_children_parms(
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     deepest_first: bool = True,
+    create_child_folder: bool = True,
 ) -> list[OpNode]:
     """
 
@@ -43,12 +44,13 @@ def promote_children_parms(
     :param skip_parameters:
     :param dest_group: Parameter folder label, or an empty string for the parent root.
     :param deepest_first: If True, deeper node is promoted first
+    :param create_child_folder: If True, creates a folder for the child node.
     :return: List of child nodes whose parameters were promoted.
     """
     children = _find_children(parent, depth, type_names, node_names, deepest_first)
     promoted = []
     for child in children:
-        if promote_parms_from(parent, child, skip_parameters, dest_group):
+        if promote_parms_from(parent, child, skip_parameters, dest_group, create_child_folder):
             promoted.append(child)
     return promoted
 
@@ -58,6 +60,7 @@ def promote_parms_from(
     child: OpNode,
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
+    create_child_folder: bool = True,
 ) -> bool:
     """Expose spare parameters from child node onto parent node and link them via expressions."""
     if not isinstance(skip_parameters, tuple):
@@ -68,7 +71,14 @@ def promote_parms_from(
         return False
 
     template_group = parent.parmTemplateGroup()
-    folder_path = _ensure_folder_path(template_group, parent, child, dest_group, skip_parameters)
+    folder_path = _ensure_folder_path(
+        template_group,
+        parent,
+        child,
+        dest_group,
+        skip_parameters,
+        create_child_folder,
+    )
     for parm in grouped_parms:
         if folder_path:
             template_group.appendToFolder(folder_path, parm)
@@ -182,13 +192,15 @@ def _ensure_folder_path(
     child: Node,
     dest_group: str = "",
     skip_parameters: tuple[str, ...] = (),
+    create_child_folder: bool = True,
 ) -> tuple[str, ...]:
     assert not dest_group or ptg.findFolder(dest_group) is not None, f"Cannot find destination group {dest_group}"
 
     parts = _get_relative_path_components(parent, child)
     current_label_path = [dest_group] if dest_group else []
 
-    for i in range(len(parts)):
+    count = len(parts) if create_child_folder else len(parts) - 1
+    for i in range(count):
         sub_path = parts[:i + 1]
         if i < len(parts) - 1:
             ancestor = parent.node("/".join(sub_path))

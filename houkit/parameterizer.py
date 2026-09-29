@@ -11,6 +11,7 @@ from .parameterizings.operator import (
 # noinspection PyUnusedImports
 from .parameterizings.promoter import (
     promote_children_parms,
+    promote_parms_from,
     promote_parms_from as promote_parms_from_child,
 )
 # noinspection PyUnusedImports
@@ -40,6 +41,7 @@ def promote_subnets(
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
     deepest_first: bool = True,
+    create_child_folder: bool = True,
 ) -> list[OpNode]:
     return promote_children_parms(
         parent,
@@ -48,7 +50,8 @@ def promote_subnets(
         depth,
         skip_parameters,
         dest_group,
-        deepest_first
+        deepest_first,
+        create_child_folder,
     )
 
 def promote_controls(
@@ -58,6 +61,7 @@ def promote_controls(
     dest_group: str = "",
     control_node_name: str | Sequence[str] = ("CONTROLS", "CONTROL"),
     deepest_first: bool = True,
+    create_child_folder: bool = True,
 ) -> list[OpNode]:
     return promote_children_parms(
         parent,
@@ -67,6 +71,7 @@ def promote_controls(
         skip_parameters,
         dest_group,
         deepest_first,
+        create_child_folder,
     )
 
 def promote_parms_from_children(
@@ -74,6 +79,13 @@ def promote_parms_from_children(
     children: Sequence[OpNode],
     skip_parameters: str | tuple[str, ...] = (),
     dest_group: str = "",
+    create_child_folder: bool = True,
 ) -> None:
     for c in children:
-        promote_parms_from_child(parent, c, skip_parameters, dest_group)
+        promote_parms_from_child(
+            parent,
+            c,
+            skip_parameters,
+            dest_group,
+            create_child_folder,
+        )

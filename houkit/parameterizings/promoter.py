@@ -79,7 +79,8 @@ def promote_parms_from(
     if not isinstance(skip_parameters, tuple):
         skip_parameters = (skip_parameters,)
 
-    grouped_parms, parm_tuples, multiparm_pairs = _get_grouped_parms(parent, child, skip_parameters)
+    promoter = _ChildPromoter(parent, child, skip_parameters)
+    grouped_parms = promoter.collect_templates()
     if not grouped_parms:
         return False
 
@@ -99,141 +100,131 @@ def promote_parms_from(
             template_group.append(parm)
     parent.setParmTemplateGroup(template_group)
 
-    for source in parm_tuples:
-        name = _format_child_parm_default(parent, child, source.name())
-        target = parent.parmTuple(name)
-        target.set(source.eval())
-        for source_parm, target_parm in zip(source, target):
-            source_parm.set(target_parm)
-
-    _link_multiparms(parent, child, multiparm_pairs)
+    promoter.link_parms()
+    promoter.link_multiparms()
     return True
 
 
-def _link_multiparms(
-    parent: OpNode,
-    child: OpNode,
-    multiparm_pairs: Sequence[tuple[str, str]],
-) -> None:
-    if not multiparm_pairs:
-        return
-    rel_dir = child.relativePathTo(parent)
-    pairs_str = " ".join(
-        f'"{child_pat}" "{rel_dir}/{parent_pat}"'
-        for child_pat, parent_pat in multiparm_pairs
-    )
-    cmd = f'opmultiparm "{child.path()}" {pairs_str}'
-    out, err = hscript(cmd)
-    assert not err, f"opmultiparm failed on {child.path()}: {err}"
+class _ChildPromoter:
+    """Encapsulates promotion of spare parameters from a child node onto a parent node."""
 
+    def __init__(
+        self,
+        parent: OpNode,
+        child: OpNode,
+        skip_parameters: tuple[str, ...] = (),
+    ):
+        self.parent = parent
+        self.child = child
+        self.skip_parameters = skip_parameters
+        self.prefix = snake_case("_".join(_get_relative_path_components(parent, child)))
+        self.parm_tuples: list[ParmTuple] = []
+        self.multiparm_pairs: list[tuple[str, str]] = []
 
-def _get_grouped_parms(
-    parent: OpNode,
-    child: OpNode,
-    skip_parameters: tuple[str, ...] = (),
-) -> tuple[list[ParmTemplate], list[ParmTuple], list[tuple[str, str]]]:
-    grouped_parms = []
-    parm_tuples = []
-    multiparm_pairs = []
-    for entry in child.parmTemplateGroup().entries():
-        processed = _format_child_template(
-            parent, child, entry, skip_parameters, parm_tuples, multiparm_pairs
+    def collect_templates(self) -> list[ParmTemplate]:
+        promoted = []
+        for entry in self.child.parmTemplateGroup().entries():
+            formatted = self._format_template(entry)
+            if formatted is not None:
+                promoted.append(formatted)
+        return promoted
+
+    def link_parms(self) -> None:
+        for source in self.parm_tuples:
+            target_name = self.format_parm_name(source.name())
+            target = self.parent.parmTuple(target_name)
+            target.set(source.eval())
+            for source_parm, target_parm in zip(source, target):
+                source_parm.set(target_parm)
+
+    def link_multiparms(self) -> None:
+        if not self.multiparm_pairs:
+            return
+        rel_dir = self.child.relativePathTo(self.parent)
+        pairs_str = " ".join(
+            f'"{child_pat}" "{rel_dir}/{parent_pat}"'
+            for child_pat, parent_pat in self.multiparm_pairs
         )
-        if processed is not None:
-            grouped_parms.append(processed)
-    return grouped_parms, parm_tuples, multiparm_pairs
+        cmd = f'opmultiparm "{self.child.path()}" {pairs_str}'
+        out, err = hscript(cmd)
+        assert not err, f"opmultiparm failed on {self.child.path()}: {err}"
 
+    def format_parm_name(self, parm_name: str) -> str:
+        return f"{self.prefix}_{parm_name}" if self.prefix else str(parm_name)
 
-def _format_child_template(
-    parent: OpNode,
-    child: OpNode,
-    tmpl: ParmTemplate,
-    skip_parameters: tuple[str, ...],
-    parm_tuples: list[ParmTuple],
-    multiparm_pairs: list[tuple[str, str]],
-) -> ParmTemplate | None:
-    if isinstance(tmpl, FolderParmTemplate):
-        if tmpl.folderType() in MULTIPARM_FOLDER_TYPES:
-            return _format_child_multiparm(
-                parent, child, tmpl, skip_parameters, parm_tuples, multiparm_pairs
-            )
-        return _format_child_folder(
-            parent, child, tmpl, skip_parameters, parm_tuples, multiparm_pairs
-        )
+    def _format_template(self, tmpl: ParmTemplate) -> ParmTemplate | None:
+        if isinstance(tmpl, FolderParmTemplate):
+            if tmpl.folderType() in MULTIPARM_FOLDER_TYPES:
+                return self._format_multiparm(tmpl)
+            return self._format_folder(tmpl)
 
-    if tmpl.name() in skip_parameters:
-        return None
-    pt = child.parmTuple(tmpl.name())
-    if pt is None or not pt[0].isSpare() or isinstance(pt.parmTemplate(), UNPROMOTABLE):
-        return None
+        if tmpl.name() in self.skip_parameters:
+            return None
+        pt = self.child.parmTuple(tmpl.name())
+        if pt is None or not pt[0].isSpare() or isinstance(pt.parmTemplate(), UNPROMOTABLE):
+            return None
 
-    param = tmpl.clone()
-    param.setName(_format_child_parm_default(parent, child, param.name()))
-    parm_tuples.append(pt)
-    return param
+        param = tmpl.clone()
+        param.setName(self.format_parm_name(param.name()))
+        self.parm_tuples.append(pt)
+        return param
 
+    def _format_multiparm(self, tmpl: FolderParmTemplate) -> FolderParmTemplate | None:
+        if tmpl.name() in self.skip_parameters:
+            return None
+        pt = self.child.parmTuple(tmpl.name())
+        if pt is None or not pt[0].isSpare():
+            return None
 
-def _format_child_multiparm(
-    parent: OpNode,
-    child: OpNode,
-    tmpl: FolderParmTemplate,
-    skip_parameters: tuple[str, ...],
-    parm_tuples: list[ParmTuple],
-    multiparm_pairs: list[tuple[str, str]],
-) -> FolderParmTemplate | None:
-    if tmpl.name() in skip_parameters:
-        return None
-    pt = child.parmTuple(tmpl.name())
-    if pt is None or not pt[0].isSpare():
-        return None
+        cloned = tmpl.clone()
+        cloned.setName(self.format_parm_name(cloned.name()))
+        cloned.setParmTemplates(tuple(
+            self._format_multiparm_sub(sub) for sub in tmpl.parmTemplates()
+        ))
 
-    cloned = tmpl.clone()
-    cloned.setName(_format_child_parm_default(parent, child, cloned.name()))
-    sub_templates = []
-    for sub in tmpl.parmTemplates():
-        sub_cloned = _format_multiparm_sub_template(parent, child, sub, multiparm_pairs)
-        sub_templates.append(sub_cloned)
-    cloned.setParmTemplates(tuple(sub_templates))
+        self.parm_tuples.append(pt)
+        count = int(pt[0].eval())
+        for i in range(1, count + 1):
+            for sub in _get_multiparm_leaves(tmpl.parmTemplates()):
+                inst_pt = self.child.parmTuple(sub.name().replace("#", str(i)))
+                if inst_pt is not None:
+                    self.parm_tuples.append(inst_pt)
+        return cloned
 
-    parm_tuples.append(pt)
-    count = int(pt[0].eval())
-    for i in range(1, count + 1):
-        for sub in _get_multiparm_leaf_templates(tmpl.parmTemplates()):
-            inst_name = sub.name().replace("#", str(i))
-            inst_pt = child.parmTuple(inst_name)
-            if inst_pt is not None:
-                parm_tuples.append(inst_pt)
-    return cloned
-
-
-def _format_multiparm_sub_template(
-    parent: OpNode,
-    child: OpNode,
-    sub: ParmTemplate,
-    multiparm_pairs: list[tuple[str, str]],
-) -> ParmTemplate:
-    sub_cloned = sub.clone()
-    sub_cloned.setName(_format_child_parm_default(parent, child, sub_cloned.name()))
-    if isinstance(sub, FolderParmTemplate) and sub.folderType() not in MULTIPARM_FOLDER_TYPES:
-        nested_subs = [
-            _format_multiparm_sub_template(parent, child, nested, multiparm_pairs)
-            for nested in sub.parmTemplates()
-        ]
-        sub_cloned.setParmTemplates(tuple(nested_subs))
-    else:
-        for suffix in _get_template_suffixes(sub):
-            multiparm_pairs.append((
-                f"{sub.name()}{suffix}",
-                f"{sub_cloned.name()}{suffix}",
+    def _format_multiparm_sub(self, sub: ParmTemplate) -> ParmTemplate:
+        cloned = sub.clone()
+        cloned.setName(self.format_parm_name(cloned.name()))
+        if isinstance(sub, FolderParmTemplate) and sub.folderType() not in MULTIPARM_FOLDER_TYPES:
+            cloned.setParmTemplates(tuple(
+                self._format_multiparm_sub(nested) for nested in sub.parmTemplates()
             ))
-    return sub_cloned
+        else:
+            for suffix in _get_template_suffixes(sub):
+                self.multiparm_pairs.append((
+                    f"{sub.name()}{suffix}",
+                    f"{cloned.name()}{suffix}",
+                ))
+        return cloned
+
+    def _format_folder(self, tmpl: FolderParmTemplate) -> FolderParmTemplate | None:
+        subs = []
+        for sub in tmpl.parmTemplates():
+            res = self._format_template(sub)
+            if res is not None:
+                subs.append(res)
+        if not subs:
+            return None
+        folder = tmpl.clone()
+        folder.setName(self.format_parm_name(folder.name()))
+        folder.setParmTemplates(tuple(subs))
+        return folder
 
 
-def _get_multiparm_leaf_templates(templates: Sequence[ParmTemplate]) -> list[ParmTemplate]:
+def _get_multiparm_leaves(templates: Sequence[ParmTemplate]) -> list[ParmTemplate]:
     leaves = []
     for tmpl in templates:
         if isinstance(tmpl, FolderParmTemplate) and tmpl.folderType() not in MULTIPARM_FOLDER_TYPES:
-            leaves.extend(_get_multiparm_leaf_templates(tmpl.parmTemplates()))
+            leaves.extend(_get_multiparm_leaves(tmpl.parmTemplates()))
         else:
             leaves.append(tmpl)
     return leaves
@@ -247,29 +238,6 @@ def _get_template_suffixes(tmpl: ParmTemplate) -> tuple[str, ...]:
     if scheme in _SCHEME_SUFFIXES and num_components <= len(_SCHEME_SUFFIXES[scheme]):
         return _SCHEME_SUFFIXES[scheme][:num_components]
     return tuple(str(i) for i in range(1, num_components + 1))
-
-
-def _format_child_folder(
-    parent: OpNode,
-    child: OpNode,
-    tmpl: FolderParmTemplate,
-    skip_parameters: tuple[str, ...],
-    parm_tuples: list[ParmTuple],
-    multiparm_pairs: list[tuple[str, str]],
-) -> FolderParmTemplate | None:
-    subs = []
-    for sub in tmpl.parmTemplates():
-        res = _format_child_template(
-            parent, child, sub, skip_parameters, parm_tuples, multiparm_pairs
-        )
-        if res is not None:
-            subs.append(res)
-    if not subs:
-        return None
-    folder = tmpl.clone()
-    folder.setName(_format_child_parm_default(parent, child, folder.name()))
-    folder.setParmTemplates(tuple(subs))
-    return folder
 
 
 def _ensure_folder_path(

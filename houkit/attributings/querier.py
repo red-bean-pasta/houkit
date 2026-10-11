@@ -21,6 +21,18 @@ def points_by_attrib(
     return dict(result)
 
 
+def points_list_by_attrib(
+    source: Geometry | Prim | Sequence[Prim],
+    attribute: str,
+    skip_blank: bool = False,
+) -> dict[str, list[Point]]:
+    points = points_by_attrib(source, attribute, skip_blank)
+    result: dict[str, list[Point]] = {}
+    for k, v in points.items():
+        result[k] = sorted(v, key=lambda p: p.number())
+    return result
+
+
 def points_start_with(
     geo: Geometry,
     attribute: str,

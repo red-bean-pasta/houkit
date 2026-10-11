@@ -103,6 +103,44 @@ def line_intersect_line(
     )
 
 
+def project_point_on_line(
+    point: Point | Vector3,
+    line: Edge | tuple[Point | Vector3, Point | Vector3],
+) -> Vector3:
+    if isinstance(line, Edge):
+        assert isinstance(point, Point), "Expected Point when line is Edge"
+        points_by_number = {
+            candidate.number(): candidate
+            for candidate in point.geometry().points()
+        }
+        line_tuple = (points_by_number[line.start], points_by_number[line.end])
+    else:
+        line_tuple = line
+    return geomath.project_point_on_line(point, line_tuple)
+
+project_point_on_edge = project_point_on_line
+
+
+def reflect_point_across_line(
+    point: Point | Vector3,
+    line: Edge | tuple[Point | Vector3, Point | Vector3],
+) -> Vector3:
+    if isinstance(line, Edge):
+        assert isinstance(point, Point), "Expected Point when line is Edge"
+        points_by_number = {
+            candidate.number(): candidate
+            for candidate in point.geometry().points()
+        }
+        line_tuple = (points_by_number[line.start], points_by_number[line.end])
+    else:
+        line_tuple = line
+    return geomath.reflect_point_across_line(point, line_tuple)
+
+reflect_point_across_edge = reflect_point_across_line
+
+direction_and_distance = geomath.direction_and_distance
+
+
 def get_prims_normal(prims: Prim | Face | Sequence[Prim]) -> Vector3:
     if not isinstance(prims, Sequence):
         return get_prim_normal(prims)

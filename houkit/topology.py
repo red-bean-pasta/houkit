@@ -34,6 +34,11 @@ from .topologies.helper import (
     order_prim_points,
     is_same_geo,
     line_intersect_line,
+    project_point_on_line,
+    project_point_on_edge,
+    reflect_point_across_line,
+    reflect_point_across_edge,
+    direction_and_distance,
     get_alignment_rotation,
     traverse_faces_between_edges,
 )

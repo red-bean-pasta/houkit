@@ -22,6 +22,7 @@ from .attributings.positional_attributer import (
 # noinspection PyUnusedImports
 from .attributings.querier import (
     points_by_attrib,
+    points_list_by_attrib,
     points_from_geo,
     points_start_with,
     positions_from_geo,

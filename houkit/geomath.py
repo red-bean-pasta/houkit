@@ -1,7 +1,7 @@
 from typing import Sequence
 
 import hou
-from hou import Vector3, Quaternion
+from hou import Vector3, Quaternion, Point
 
 # noinspection PyUnusedImports
 from .geomaths.elliptical_interpolator import (
@@ -97,3 +97,43 @@ def line_intersect_line(
     first_ratio = offset.cross(second_direction).dot(normal) / normal_length
 
     return first_start + first_direction * first_ratio
+
+
+def direction_and_distance(
+    source: Vector3 | Point,
+    target: Vector3 | Point,
+) -> tuple[Vector3, float]:
+    ps = source.position() if isinstance(source, Point) else source
+    pt = target.position() if isinstance(target, Point) else target
+    diff = pt - ps
+    distance = ps.distanceTo(pt)
+    assert distance > 1e-6, "Expected distinct source and target positions"
+    return diff.normalized(), distance
+
+
+def project_point_on_line(
+    point: Vector3 | Point,
+    line: tuple[Vector3 | Point, Vector3 | Point],
+) -> Vector3:
+    p = point.position() if isinstance(point, Point) else point
+    start = line[0].position() if isinstance(line[0], Point) else line[0]
+    end = line[1].position() if isinstance(line[1], Point) else line[1]
+    direction = end - start
+    length_squared = direction.dot(direction)
+    assert length_squared > 1e-12, "Expected a line with non-zero length"
+    offset = p - start
+    return start + direction * (offset.dot(direction) / length_squared)
+
+project_point_on_edge = project_point_on_line
+
+
+def reflect_point_across_line(
+    point: Vector3 | Point,
+    line: tuple[Vector3 | Point, Vector3 | Point],
+) -> Vector3:
+    projection = project_point_on_line(point, line)
+    p = point.position() if isinstance(point, Point) else point
+    return projection * 2.0 - p
+
+reflect_point_across_edge = reflect_point_across_line
+
